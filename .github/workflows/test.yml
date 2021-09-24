@@ -20,6 +20,7 @@ jobs:
         run: |
           echo "::set-output name=go-build::$(go env GOCACHE)"
           echo "::set-output name=go-mod::$(go env GOMODCACHE)"
+
       - name: Checkout
         uses: actions/checkout@v2
 
@@ -36,9 +37,11 @@ jobs:
           key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-mod-
+
       - name: Download go modules
         run: |
           go mod download
+
       - name: Run tests
         run: |
           go test -race -covermode atomic -coverprofile=covprofile ./...
