@@ -28,7 +28,7 @@ linters-settings:
   gocyclo:
     min-complexity: 15
   goimports:
-    local-prefixes: github.com/pomerium/pomerium
+    local-prefixes: github.com/pomerium/webauthn
   govet:
     check-shadowing: false
   lll:
@@ -166,22 +166,6 @@ issues:
     - linters:
         - lll
       source: "^//go:generate "
-    # erroneously thinks google api url is a cred
-    - path: internal/identity/google.go
-      text: "Potential hardcoded credentials"
-      linters:
-        - gosec
-    # deprecated but every example still uses New
-    - path: internal/identity/google.go
-      text: "please use NewService instead"
-      linters:
-        - staticcheck
-    - path: internal/identity/oauth/github/github.go
-      text: "Potential hardcoded credentials"
-      linters:
-        - gosec
-    - linters: [golint]
-      text: "should have a package comment"
 
 # golangci.com configuration
 # https://github.com/golangci/golangci/wiki/Configuration
