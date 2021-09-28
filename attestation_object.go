@@ -22,7 +22,7 @@ type AttestationObject struct {
 	Format string `json:"fmt"`
 	// The Statement is a signed data object, containing statements about a public key credential itself and
 	// the authenticator that created it.
-	Statement map[string]interface{} `json:"attStmt,omitempty"`
+	Statement AttestationStatement `json:"attStmt,omitempty"`
 }
 
 // UnmarshalAttestationObject unmarshals an attestation object from a slice of bytes. It expects a CBOR-encoded
