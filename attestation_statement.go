@@ -85,6 +85,13 @@ func (attestationStatement AttestationStatement) GetAlgorithm() cose.Algorithm {
 	return 0
 }
 
+// GetSignature gets the "sig" field of the attestation statement. It returns nil if no field is found, or the field
+// does not contain a byte slice.
+func (attestationStatement AttestationStatement) GetSignature() []byte {
+	sig, _ := attestationStatement["sig"].([]byte)
+	return sig
+}
+
 // UnmarshalCertificate unmarshals an X.509 certificate stored in an x5c key.
 func (attestationStatement AttestationStatement) UnmarshalCertificate() (*x509.Certificate, error) {
 	x5c, ok := attestationStatement["x5c"]

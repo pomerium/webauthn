@@ -1,6 +1,7 @@
 package webauthn
 
 import (
+	"crypto/subtle"
 	"encoding/binary"
 	"errors"
 	"fmt"
@@ -11,6 +12,11 @@ const AAGUIDSize = 16
 
 // AAGUID is the Authenticator Attestation GUID.
 type AAGUID [AAGUIDSize]byte
+
+// Equals returns true if the AAGUIDs match.
+func (aaguid AAGUID) Equals(other AAGUID) bool {
+	return subtle.ConstantTimeCompare(aaguid[:], other[:]) == 1
+}
 
 // ErrInvalidAttestedCredentialData indicates the attested credential data is invalid.
 var ErrInvalidAttestedCredentialData = errors.New("invalid attested credential data")
