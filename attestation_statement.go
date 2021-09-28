@@ -4,6 +4,8 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
+
+	"github.com/pomerium/webauthn/cose"
 )
 
 var (
@@ -13,6 +15,17 @@ var (
 	ErrInvalidCertificate = errors.New("invalid certificate")
 	// ErrMissingCertificate indicates that an attestation statement is missing an x5c certificate.
 	ErrMissingCertificate = errors.New("missing certificate")
+)
+
+// Attestation formats from https://www.w3.org/TR/webauthn-2/#sctn-defined-attestation-formats
+const (
+	AttestationFormatAndroidKey       = "android-key"
+	AttestationFormatAndroidSafetyNet = "android-safetynet"
+	AttestationFormatApple            = "apple"
+	AttestationFormatFIDOU2F          = "fido-u2f"
+	AttestationFormatNone             = "none"
+	AttestationFormatPacked           = "packed"
+	AttestationFormatTPM              = "tpm"
 )
 
 // Attestation types from https://www.w3.org/TR/webauthn-2/#sctn-attestation-types
@@ -45,6 +58,32 @@ const (
 // AttestationStatement is a map of data stored in an AttestationObject according to one of the pre-defined attestation
 // statement formats.
 type AttestationStatement map[string]interface{}
+
+// GetAlgorithm gets the "alg" field of the attestation statement. If no field is found, or the field contains invalid
+// data, 0 will be returned.
+func (attestationStatement AttestationStatement) GetAlgorithm() cose.Algorithm {
+	alg, ok := attestationStatement["alg"]
+	if !ok {
+		return 0
+	}
+
+	switch t := alg.(type) {
+	case int:
+		return cose.Algorithm(t)
+	case int32:
+		return cose.Algorithm(t)
+	case int64:
+		return cose.Algorithm(t)
+	case uint:
+		return cose.Algorithm(t)
+	case uint32:
+		return cose.Algorithm(t)
+	case uint64:
+		return cose.Algorithm(t)
+	}
+
+	return 0
+}
 
 // UnmarshalCertificate unmarshals an X.509 certificate stored in an x5c key.
 func (attestationStatement AttestationStatement) UnmarshalCertificate() (*x509.Certificate, error) {
