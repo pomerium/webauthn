@@ -82,8 +82,7 @@ func UnmarshalECDSAPublicKey(raw []byte) (key *ECDSAPublicKey, remaining []byte,
 		verify: verify,
 	}
 	remaining = raw[decoder.NumBytesRead():]
-	err = nil
-	return key, remaining, err
+	return key, remaining, nil
 }
 
 // Algorithm returns the ECDSA algorithm.

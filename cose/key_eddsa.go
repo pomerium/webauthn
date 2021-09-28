@@ -52,8 +52,7 @@ func UnmarshalEdDSAPublicKey(raw []byte) (key *EdDSAPublicKey, remaining []byte,
 		key: obj.XCoordinate,
 	}
 	remaining = raw[decoder.NumBytesRead():]
-	err = nil
-	return key, remaining, err
+	return key, remaining, nil
 }
 
 // Algorithm returns EdDSA.
