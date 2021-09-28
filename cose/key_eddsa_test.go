@@ -2,10 +2,10 @@ package cose
 
 import (
 	"crypto/ed25519"
+	"encoding/base64"
 	"math/rand"
 	"testing"
 
-	"github.com/Universal-Health-Chain/uhc-cloudflare-circl/sign/ed448"
 	"github.com/fxamacker/cbor/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -32,7 +32,7 @@ func TestUnmarshalEdDSAPublicKey(t *testing.T) {
 		assert.Equal(t, pub, key.CryptoPublicKey())
 	})
 	t.Run("unsupported curve", func(t *testing.T) {
-		pub, _, err := ed448.GenerateKey(random)
+		pub, err := base64.StdEncoding.DecodeString("I4ozqoQAbILoGwxq5TxS16k49Zq4q58/C19heG8Vb8Yxh1Yk6mhvTDBu1NsqF/dQ5laVoMRQPhOiiDRPE+QjrLc6ks41vfz4Mo6dntgRqmWOsvkJe45tkhYyPOzu+YnrXfH98hEL1yERIl8liG94nFAA")
 		require.NoError(t, err)
 		rawKey, err := cbor.Marshal(map[int]interface{}{
 			1:  KeyTypeOctet,
