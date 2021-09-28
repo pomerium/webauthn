@@ -1,43 +1,9 @@
 package webauthn
 
-import "time"
-
-// The AuthenticatorAttestationResponse interface represents the authenticator's response to a client's request for
-// the creation of a new public key credential. It contains information about the new credential that can be used to
-// identify it for later use, and metadata that can be used by the WebAuthn Relying Party to assess the
-// characteristics of the credential during registration.
-type AuthenticatorAttestationResponse struct {
-	// ClientDataJSON contains the JSON-compatible serialization of client data passed to the authenticator by the
-	// client in order to generate this credential. The exact JSON serialization MUST be preserved, as the hash of
-	// the serialized client data has been computed over it.
-	ClientDataJSON []byte `json:"clientDataJSON"`
-	// AttestationObject contains an attestation object, which is opaque to, and cryptographically protected
-	// against tampering by, the client. The attestation object contains both authenticator data and an attestation
-	// statement. The former contains the AAGUID, a unique credential ID, and the credential public key. The
-	// contents of the attestation statement are determined by the attestation statement format used by the
-	// authenticator. It also contains any additional information that the Relying Party's server requires to
-	// validate the attestation statement, as well as to decode and validate the authenticator data along with the
-	// JSON-compatible serialization of client data.
-	AttestationObject []byte `json:"attestationObject"`
-}
-
-// The AuthenticatorAssertionResponse represents an authenticator's response to a client’s request for generation
-// of a new authentication assertion given the WebAuthn Relying Party's challenge and OPTIONAL list of credentials
-// it is aware of. This response contains a cryptographic signature proving possession of the credential private
-// key, and optionally evidence of user consent to a specific transaction.
-type AuthenticatorAssertionResponse struct {
-	// ClientDataJSON contains the JSON-compatible serialization of client data passed to the authenticator by the
-	// client in order to generate this assertion. The exact JSON serialization MUST be preserved, as the hash of
-	// the serialized client data has been computed over it.
-	ClientDataJSON []byte `json:"clientDataJSON"`
-	// AuthenticatorData contains the authenticator data returned by the authenticator.
-	AuthenticatorData []byte `json:"authenticatorData"`
-	// Signature contains the raw signature returned from the authenticator.
-	Signature []byte `json:"signature"`
-	// UserHandle contains the user handle returned from the authenticator, or nil if the authenticator did not
-	// return a user handle.
-	UserHandle []byte `json:"userHandle"`
-}
+import (
+	"crypto/sha256"
+	"time"
+)
 
 // AuthenticatorSelectionCriteria specifies requirements regarding authenticator attributes.
 type AuthenticatorSelectionCriteria struct {
@@ -80,6 +46,9 @@ type CollectedClientData struct {
 	// the Relying Party. Its absence indicates that the client doesn’t support token binding.
 	TokenBinding *TokenBinding `json:"tokenBinding"`
 }
+
+// ClientDataJSONHash represents the SHA-256 hash of the clientDataJSON data.
+type ClientDataJSONHash = [sha256.Size]byte
 
 // PublicKeyAssertionCredential contains the attributes when a new assertion is requested.
 type PublicKeyAssertionCredential struct {
