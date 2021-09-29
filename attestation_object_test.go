@@ -1,8 +1,10 @@
 package webauthn
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"encoding/pem"
 	"os"
 	"sort"
 	"testing"
@@ -10,6 +12,21 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestWindows(t *testing.T) {
+	response := readTestAuthenticatorAttestationResponse(t, "TPMSHA1")
+	attestationObject, _, err := UnmarshalAttestationObject(response.AttestationObject)
+	require.NoError(t, err)
+	t.Error(attestationObject.Statement)
+	certificate, err := attestationObject.Statement.UnmarshalCertificate()
+	require.NoError(t, err)
+
+	var buf bytes.Buffer
+	err = pem.Encode(&buf, &pem.Block{Type: "CERTIFICATE", Bytes: certificate.Raw})
+	require.NoError(t, err)
+
+	os.WriteFile("testdata/attestationTPMSHA1Certificate.pem", buf.Bytes(), 0644)
+}
 
 func TestUnmarshalAttestationObject(t *testing.T) {
 	readAttestationObject := func(name string) []byte {
