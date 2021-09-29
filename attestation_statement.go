@@ -4,6 +4,8 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
+
+	"github.com/pomerium/webauthn/cose"
 )
 
 var (
@@ -13,6 +15,17 @@ var (
 	ErrInvalidCertificate = errors.New("invalid certificate")
 	// ErrMissingCertificate indicates that an attestation statement is missing an x5c certificate.
 	ErrMissingCertificate = errors.New("missing certificate")
+)
+
+// Attestation formats from https://www.w3.org/TR/webauthn-2/#sctn-defined-attestation-formats
+const (
+	AttestationFormatAndroidKey       = "android-key"
+	AttestationFormatAndroidSafetyNet = "android-safetynet"
+	AttestationFormatApple            = "apple"
+	AttestationFormatFIDOU2F          = "fido-u2f"
+	AttestationFormatNone             = "none"
+	AttestationFormatPacked           = "packed"
+	AttestationFormatTPM              = "tpm"
 )
 
 // Attestation types from https://www.w3.org/TR/webauthn-2/#sctn-attestation-types
@@ -46,6 +59,20 @@ const (
 // statement formats.
 type AttestationStatement map[string]interface{}
 
+// GetAlgorithm gets the "alg" field of the attestation statement. If no field is found, or the field contains invalid
+// data, 0 will be returned.
+func (attestationStatement AttestationStatement) GetAlgorithm() cose.Algorithm {
+	alg, _ := attestationStatement["alg"].(int64)
+	return cose.Algorithm(alg)
+}
+
+// GetSignature gets the "sig" field of the attestation statement. It returns nil if no field is found, or the field
+// does not contain a byte slice.
+func (attestationStatement AttestationStatement) GetSignature() []byte {
+	sig, _ := attestationStatement["sig"].([]byte)
+	return sig
+}
+
 // UnmarshalCertificate unmarshals an X.509 certificate stored in an x5c key.
 func (attestationStatement AttestationStatement) UnmarshalCertificate() (*x509.Certificate, error) {
 	x5c, ok := attestationStatement["x5c"]
@@ -77,6 +104,8 @@ func VerifyAttestationStatement(
 	clientDataJSONHash ClientDataJSONHash,
 ) error {
 	switch attestationObject.Format {
+	case AttestationFormatPacked:
+		return VerifyPackedAttestationStatement(attestationObject, clientDataJSONHash)
 	default:
 		return fmt.Errorf("%w: unknown format %s", ErrInvalidAttestationStatement,
 			attestationObject.Format)

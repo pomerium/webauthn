@@ -38,3 +38,9 @@ func UnmarshalAttestationObject(raw []byte) (attestationObject *AttestationObjec
 
 	return attestationObject, raw[decoder.NumBytesRead():], nil
 }
+
+// UnmarshalAuthenticatorData unmarshals the authenticator data.
+func (attestationObject *AttestationObject) UnmarshalAuthenticatorData() (*AuthenticatorData, error) {
+	authenticatorData, _, err := UnmarshalAuthenticatorData(attestationObject.AuthData)
+	return authenticatorData, err
+}

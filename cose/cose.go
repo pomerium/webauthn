@@ -2,7 +2,10 @@
 // needed for webauthn.
 package cose
 
-import "crypto/elliptic"
+import (
+	"crypto/elliptic"
+	"crypto/x509"
+)
 
 // The Algorithm identifies a cryptographic algorithm as defined in
 // https://www.iana.org/assignments/cose/cose.xhtml#algorithms.
@@ -32,6 +35,36 @@ const (
 	// AlgorithmES256 indicates ECDSA w/ SHA-256.
 	AlgorithmES256 Algorithm = -7
 )
+
+// X509SignatureAlgorithm returns the corresponding x509.SignatureAlgorithm for the Algorithm.
+func (alg Algorithm) X509SignatureAlgorithm() x509.SignatureAlgorithm {
+	switch alg {
+	case AlgorithmRS1:
+		return x509.SHA1WithRSA
+	case AlgorithmRS512:
+		return x509.SHA512WithRSA
+	case AlgorithmRS384:
+		return x509.SHA384WithRSA
+	case AlgorithmRS256:
+		return x509.SHA256WithRSA
+	case AlgorithmPS512:
+		return x509.SHA512WithRSAPSS
+	case AlgorithmPS384:
+		return x509.SHA384WithRSAPSS
+	case AlgorithmPS256:
+		return x509.SHA256WithRSAPSS
+	case AlgorithmES512:
+		return x509.ECDSAWithSHA512
+	case AlgorithmES384:
+		return x509.ECDSAWithSHA384
+	case AlgorithmEdDSA:
+		return x509.PureEd25519
+	case AlgorithmES256:
+		return x509.ECDSAWithSHA256
+	default:
+		return x509.UnknownSignatureAlgorithm
+	}
+}
 
 // String returns the algorithm as a string.
 func (alg Algorithm) String() string {
