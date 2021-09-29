@@ -62,27 +62,8 @@ type AttestationStatement map[string]interface{}
 // GetAlgorithm gets the "alg" field of the attestation statement. If no field is found, or the field contains invalid
 // data, 0 will be returned.
 func (attestationStatement AttestationStatement) GetAlgorithm() cose.Algorithm {
-	alg, ok := attestationStatement["alg"]
-	if !ok {
-		return 0
-	}
-
-	switch t := alg.(type) {
-	case int:
-		return cose.Algorithm(t)
-	case int32:
-		return cose.Algorithm(t)
-	case int64:
-		return cose.Algorithm(t)
-	case uint:
-		return cose.Algorithm(t)
-	case uint32:
-		return cose.Algorithm(t)
-	case uint64:
-		return cose.Algorithm(t)
-	}
-
-	return 0
+	alg, _ := attestationStatement["alg"].(int64)
+	return cose.Algorithm(alg)
 }
 
 // GetSignature gets the "sig" field of the attestation statement. It returns nil if no field is found, or the field
@@ -123,6 +104,8 @@ func VerifyAttestationStatement(
 	clientDataJSONHash ClientDataJSONHash,
 ) error {
 	switch attestationObject.Format {
+	case AttestationFormatPacked:
+		return VerifyPackedAttestationStatement(attestationObject, clientDataJSONHash)
 	default:
 		return fmt.Errorf("%w: unknown format %s", ErrInvalidAttestationStatement,
 			attestationObject.Format)

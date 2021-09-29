@@ -43,7 +43,7 @@ func verifyPackedAttestationStatementCertificate(
 ) error {
 	authenticatorData, err := attestationObject.UnmarshalAuthenticatorData()
 	if err != nil {
-		return fmt.Errorf("%w: %s", ErrInvalidCertificate, err)
+		return fmt.Errorf("%w: %s", ErrInvalidAttestationStatement, err)
 	}
 
 	// Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash using the
@@ -62,29 +62,29 @@ func verifyPackedAttestationStatementCertificate(
 	// The attestation certificate MUST have the following fields/extensions:
 	// - Version MUST be set to 3 (which is indicated by an ASN.1 INTEGER with value 2).
 	if certificate.Version != 3 {
-		return fmt.Errorf("%w: invalid certificate version", ErrInvalidCertificate)
+		return fmt.Errorf("%w: invalid certificate version", ErrInvalidAttestationStatement)
 	}
 	// - Subject field MUST be set to:
 	//   - Subject-C: ISO 3166 code specifying the country where the Authenticator vendor is incorporated
 	//                (PrintableString)
-	if len(certificate.Subject.Country) == 0 {
-		return fmt.Errorf("%w: missing certificate country", ErrInvalidCertificate)
+	if strings.Join(certificate.Subject.Country, "") == "" {
+		return fmt.Errorf("%w: missing certificate country", ErrInvalidAttestationStatement)
 	}
 	//   - Subject-O: Legal name of the Authenticator vendor (UTF8String)
-	if len(certificate.Subject.Organization) == 0 {
-		return fmt.Errorf("%w: missing certificate authenticator vendor name", ErrInvalidCertificate)
+	if strings.Join(certificate.Subject.Organization, "") == "" {
+		return fmt.Errorf("%w: missing certificate authenticator vendor name", ErrInvalidAttestationStatement)
 	}
 	//   - Subject-OU: Literal string “Authenticator Attestation” (UTF8String)
 	if strings.Join(certificate.Subject.OrganizationalUnit, "") != "Authenticator Attestation" {
-		return fmt.Errorf("%w: invalid certificate organizational unit", ErrInvalidCertificate)
+		return fmt.Errorf("%w: invalid certificate organizational unit", ErrInvalidAttestationStatement)
 	}
 	//   - Subject-CN: A UTF8String of the vendor’s choosing
-	if len(certificate.Subject.CommonName) == 0 {
-		return fmt.Errorf("%w: missing certificate common name", ErrInvalidCertificate)
+	if certificate.Subject.CommonName == "" {
+		return fmt.Errorf("%w: missing certificate common name", ErrInvalidAttestationStatement)
 	}
 	// - The Basic Constraints extension MUST have the CA component set to false.
 	if certificate.IsCA {
-		return fmt.Errorf("%w: certificate CA component must be set to false", ErrInvalidCertificate)
+		return fmt.Errorf("%w: certificate CA component must be set to false", ErrInvalidAttestationStatement)
 	}
 
 	// If attestnCert contains an extension with OID 1.3.6.1.4.1.45724.1.1.4 (id-fido-gen-ce-aaguid) verify that the
@@ -92,7 +92,7 @@ func verifyPackedAttestationStatementCertificate(
 	aaguid, err := getCertificateAAGUID(certificate)
 	if err == nil {
 		if aaguid.Equals(authenticatorData.AttestedCredentialData.AAGUID) {
-			return fmt.Errorf("%w: invalid AAGUID", ErrInvalidCertificate)
+			return fmt.Errorf("%w: invalid AAGUID", ErrInvalidAttestationStatement)
 		}
 	} else if errors.Is(err, errMissingAAGUID) {
 		// According to the spec:
