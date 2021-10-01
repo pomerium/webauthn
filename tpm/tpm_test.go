@@ -1,27 +1,31 @@
 package tpm
 
 import (
-	"crypto/x509"
-	"encoding/pem"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
-func TestGetHardwareDetailsFromCertificate(t *testing.T) {
-	bs, err := os.ReadFile("../testdata/attestationTPMSHA256Certificate.pem")
-	require.NoError(t, err)
-	block, _ := pem.Decode(bs)
-	certificate, err := x509.ParseCertificate(block.Bytes)
-	require.NoError(t, err)
+func TestVendorID(t *testing.T) {
+	microsoft := RegisteredVendors[VendorID{0x4D, 0x53, 0x46, 0x54}]
+	assert.Equal(t, "Microsoft", microsoft.Name)
+	assert.Equal(t, "MSFT", microsoft.ID.String())
 
-	details, err := GetHardwareDetailsFromCertificate(certificate)
-	assert.NoError(t, err)
-	assert.Equal(t, &HardwareDetails{
-		Manufacturer:    Vendor{"FIDO Alliance", VendorID{0xFF, 0xFF, 0xF1, 0xD0}},
-		PartNumber:      "NPCT6xx",
-		FirmwareVersion: "id:13",
-	}, details)
+	t.Run("valid", func(t *testing.T) {
+		vendorID, err := UnmarshalVendorID("id:4D534654")
+		assert.NoError(t, err)
+		assert.Equal(t, microsoft.ID, vendorID)
+	})
+	t.Run("wrong length", func(t *testing.T) {
+		_, err := UnmarshalVendorID("4D534654")
+		assert.Error(t, err)
+	})
+	t.Run("missing id", func(t *testing.T) {
+		_, err := UnmarshalVendorID("0004D534654")
+		assert.Error(t, err)
+	})
+	t.Run("not hex", func(t *testing.T) {
+		_, err := UnmarshalVendorID("id:ZZZZZZZZ")
+		assert.Error(t, err)
+	})
 }

@@ -14,37 +14,46 @@ import (
 func VerifyPackedAttestationStatement(
 	attestationObject *AttestationObject,
 	clientDataJSONHash ClientDataJSONHash,
-) error {
+) (*VerifyAttestationStatementResult, error) {
 	if attestationObject.Format != AttestationFormatPacked {
-		return fmt.Errorf("%w: invalid format %s", ErrInvalidAttestationStatement, attestationObject.Format)
+		return nil, fmt.Errorf("%w: invalid format %s", ErrInvalidAttestationStatement, attestationObject.Format)
 	}
 
-	certificate, err := attestationObject.Statement.UnmarshalCertificate()
+	certificates, err := attestationObject.Statement.UnmarshalCertificates()
 	if err == nil {
 		// 2. If x5c is present:
-		err = verifyPackedAttestationStatementCertificate(attestationObject, clientDataJSONHash, certificate)
-	} else if errors.Is(err, ErrMissingCertificate) {
+		return verifyPackedAttestationStatementCertificate(
+			attestationObject,
+			clientDataJSONHash,
+			certificates,
+		)
+	} else if errors.Is(err, ErrMissingCertificates) {
 		// 3. If x5c is not present, self attestation is in use.
-		err = verifyPackedAttestationStatementSelfAttestation(attestationObject, clientDataJSONHash)
+		return verifyPackedAttestationStatementSelfAttestation(
+			attestationObject,
+			clientDataJSONHash,
+		)
 	} else {
-		return fmt.Errorf("%w: invalid certificate: %s", ErrInvalidAttestationStatement, err)
+		return nil, fmt.Errorf("%w: invalid certificates: %s", ErrInvalidAttestationStatement, err)
 	}
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func verifyPackedAttestationStatementCertificate(
 	attestationObject *AttestationObject,
 	clientDataJSONHash ClientDataJSONHash,
-	certificate *x509.Certificate,
-) error {
+	certificates []*x509.Certificate,
+) (*VerifyAttestationStatementResult, error) {
 	authenticatorData, err := attestationObject.UnmarshalAuthenticatorData()
 	if err != nil {
-		return fmt.Errorf("%w: %s", ErrInvalidAttestationStatement, err)
+		return nil, fmt.Errorf("%w: %s", ErrInvalidAttestationStatement, err)
 	}
+
+	if len(certificates) == 0 {
+		return nil, fmt.Errorf("%w: no certificates defined", ErrInvalidAttestationStatement)
+	}
+
+	// use the first certificate as the attstnCert
+	certificate := certificates[0]
 
 	// Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash using the
 	// attestation public key in attestnCert with the algorithm specified in alg.
@@ -53,7 +62,7 @@ func verifyPackedAttestationStatementCertificate(
 	verificationData := concat(attestationObject.AuthData, clientDataJSONHash[:])
 	err = certificate.CheckSignature(algorithm.X509SignatureAlgorithm(), verificationData, signature)
 	if err != nil {
-		return fmt.Errorf("%w: invalid signature, %s", ErrInvalidAttestationStatement, err)
+		return nil, fmt.Errorf("%w: invalid signature, %s", ErrInvalidAttestationStatement, err)
 	}
 
 	// Verify that attestnCert meets the requirements in §8.2.1 Packed Attestation Statement Certificate
@@ -62,29 +71,29 @@ func verifyPackedAttestationStatementCertificate(
 	// The attestation certificate MUST have the following fields/extensions:
 	// - Version MUST be set to 3 (which is indicated by an ASN.1 INTEGER with value 2).
 	if certificate.Version != 3 {
-		return fmt.Errorf("%w: invalid certificate version", ErrInvalidAttestationStatement)
+		return nil, fmt.Errorf("%w: invalid certificate version", ErrInvalidAttestationStatement)
 	}
 	// - Subject field MUST be set to:
 	//   - Subject-C: ISO 3166 code specifying the country where the Authenticator vendor is incorporated
 	//                (PrintableString)
 	if strings.Join(certificate.Subject.Country, "") == "" {
-		return fmt.Errorf("%w: missing certificate country", ErrInvalidAttestationStatement)
+		return nil, fmt.Errorf("%w: missing certificate country", ErrInvalidAttestationStatement)
 	}
 	//   - Subject-O: Legal name of the Authenticator vendor (UTF8String)
 	if strings.Join(certificate.Subject.Organization, "") == "" {
-		return fmt.Errorf("%w: missing certificate authenticator vendor name", ErrInvalidAttestationStatement)
+		return nil, fmt.Errorf("%w: missing certificate authenticator vendor name", ErrInvalidAttestationStatement)
 	}
 	//   - Subject-OU: Literal string “Authenticator Attestation” (UTF8String)
 	if strings.Join(certificate.Subject.OrganizationalUnit, "") != "Authenticator Attestation" {
-		return fmt.Errorf("%w: invalid certificate organizational unit", ErrInvalidAttestationStatement)
+		return nil, fmt.Errorf("%w: invalid certificate organizational unit", ErrInvalidAttestationStatement)
 	}
 	//   - Subject-CN: A UTF8String of the vendor’s choosing
 	if certificate.Subject.CommonName == "" {
-		return fmt.Errorf("%w: missing certificate common name", ErrInvalidAttestationStatement)
+		return nil, fmt.Errorf("%w: missing certificate common name", ErrInvalidAttestationStatement)
 	}
 	// - The Basic Constraints extension MUST have the CA component set to false.
 	if certificate.IsCA {
-		return fmt.Errorf("%w: certificate CA component must be set to false", ErrInvalidAttestationStatement)
+		return nil, fmt.Errorf("%w: certificate CA component must be set to false", ErrInvalidAttestationStatement)
 	}
 
 	// If attestnCert contains an extension with OID 1.3.6.1.4.1.45724.1.1.4 (id-fido-gen-ce-aaguid) verify that the
@@ -92,7 +101,7 @@ func verifyPackedAttestationStatementCertificate(
 	aaguid, err := getCertificateAAGUID(certificate)
 	if err == nil {
 		if aaguid.Equals(authenticatorData.AttestedCredentialData.AAGUID) {
-			return fmt.Errorf("%w: invalid AAGUID", ErrInvalidAttestationStatement)
+			return nil, fmt.Errorf("%w: invalid AAGUID", ErrInvalidAttestationStatement)
 		}
 	} else if errors.Is(err, errMissingAAGUID) {
 		// According to the spec:
@@ -102,30 +111,33 @@ func verifyPackedAttestationStatementCertificate(
 		//
 		// but its unclear how to know that this is the case. For now, we just ignore a missing AAGUID.
 	} else {
-		return fmt.Errorf("%w: %s", ErrInvalidCertificate, err)
+		return nil, fmt.Errorf("%w: %s", ErrInvalidCertificate, err)
 	}
 
-	return nil
+	return &VerifyAttestationStatementResult{
+		Type:      AttestationTypeBasic,
+		TrustPath: certificates,
+	}, nil
 }
 
 func verifyPackedAttestationStatementSelfAttestation(
 	attestationObject *AttestationObject,
 	clientDataJSONHash ClientDataJSONHash,
-) error {
+) (*VerifyAttestationStatementResult, error) {
 	authenticatorData, err := attestationObject.UnmarshalAuthenticatorData()
 	if err != nil {
-		return fmt.Errorf("%w: %s", ErrInvalidCertificate, err)
+		return nil, fmt.Errorf("%w: %s", ErrInvalidCertificate, err)
 	}
 
 	publicKey, _, err := cose.UnmarshalPublicKey(authenticatorData.AttestedCredentialData.CredentialPublicKey)
 	if err != nil {
-		return fmt.Errorf("%w: %s", ErrInvalidAttestationStatement, err)
+		return nil, fmt.Errorf("%w: %s", ErrInvalidAttestationStatement, err)
 	}
 
 	// Validate that alg matches the algorithm of the credentialPublicKey in authenticatorData.
 	alg := attestationObject.Statement.GetAlgorithm()
 	if alg != publicKey.Algorithm() {
-		return fmt.Errorf("%w: unexpected algorithm for credential public key", ErrInvalidAttestationStatement)
+		return nil, fmt.Errorf("%w: unexpected algorithm for credential public key", ErrInvalidAttestationStatement)
 	}
 
 	// Verify that sig is a valid signature over the concatenation of authenticatorData and clientDataHash using the
@@ -134,8 +146,10 @@ func verifyPackedAttestationStatementSelfAttestation(
 	verificationData := concat(attestationObject.AuthData, clientDataJSONHash[:])
 	err = publicKey.Verify(verificationData, signature)
 	if err != nil {
-		return fmt.Errorf("%w: invalid signature, %s", ErrInvalidAttestationStatement, err)
+		return nil, fmt.Errorf("%w: invalid signature, %s", ErrInvalidAttestationStatement, err)
 	}
 
-	return nil
+	return &VerifyAttestationStatementResult{
+		Type: AttestationTypeSelf,
+	}, nil
 }

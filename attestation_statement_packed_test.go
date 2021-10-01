@@ -14,9 +14,20 @@ func TestVerifyPackedAttestationStatement(t *testing.T) {
 			attestationObject, err := response.UnmarshalAttestationObject()
 			require.NoError(t, err)
 			clientDataJSONHash := response.GetClientDataJSONHash()
+			certificates, _ := attestationObject.Statement.UnmarshalCertificates()
 			t.Run(name, func(t *testing.T) {
-				err = VerifyAttestationStatement(attestationObject, clientDataJSONHash)
+				result, err := VerifyAttestationStatement(attestationObject, clientDataJSONHash)
 				assert.NoError(t, err)
+				if certificates == nil {
+					assert.Equal(t, &VerifyAttestationStatementResult{
+						Type: AttestationTypeSelf,
+					}, result)
+				} else {
+					assert.Equal(t, &VerifyAttestationStatementResult{
+						Type:      AttestationTypeBasic,
+						TrustPath: certificates,
+					}, result)
+				}
 			})
 		}
 	})
@@ -27,8 +38,9 @@ func TestVerifyPackedAttestationStatement(t *testing.T) {
 		require.NoError(t, err)
 		clientDataJSONHash := response.GetClientDataJSONHash()
 
-		err = VerifyPackedAttestationStatement(attestationObject, clientDataJSONHash)
+		result, err := VerifyPackedAttestationStatement(attestationObject, clientDataJSONHash)
 		assert.ErrorIs(t, err, ErrInvalidAttestationStatement)
+		assert.Nil(t, result)
 	})
 	t.Run("invalid certificate", func(t *testing.T) {
 		response := readTestAuthenticatorAttestationResponse(t, "Packed")
@@ -37,8 +49,9 @@ func TestVerifyPackedAttestationStatement(t *testing.T) {
 		clientDataJSONHash := response.GetClientDataJSONHash()
 		attestationObject.Statement["x5c"] = []byte("INVALID")
 
-		err = VerifyPackedAttestationStatement(attestationObject, clientDataJSONHash)
+		result, err := VerifyPackedAttestationStatement(attestationObject, clientDataJSONHash)
 		assert.ErrorIs(t, err, ErrInvalidAttestationStatement)
+		assert.Nil(t, result)
 	})
 	t.Run("invalid authenticator data", func(t *testing.T) {
 		response := readTestAuthenticatorAttestationResponse(t, "Packed")
@@ -47,8 +60,9 @@ func TestVerifyPackedAttestationStatement(t *testing.T) {
 		clientDataJSONHash := response.GetClientDataJSONHash()
 		attestationObject.AuthData = []byte("INVALID")
 
-		err = VerifyPackedAttestationStatement(attestationObject, clientDataJSONHash)
+		result, err := VerifyPackedAttestationStatement(attestationObject, clientDataJSONHash)
 		assert.ErrorIs(t, err, ErrInvalidAttestationStatement)
+		assert.Nil(t, result)
 	})
 	t.Run("invalid signature", func(t *testing.T) {
 		response := readTestAuthenticatorAttestationResponse(t, "Packed")
@@ -57,7 +71,8 @@ func TestVerifyPackedAttestationStatement(t *testing.T) {
 		clientDataJSONHash := response.GetClientDataJSONHash()
 		attestationObject.Statement["sig"] = []byte("INVALID")
 
-		err = VerifyPackedAttestationStatement(attestationObject, clientDataJSONHash)
+		result, err := VerifyPackedAttestationStatement(attestationObject, clientDataJSONHash)
 		assert.ErrorIs(t, err, ErrInvalidAttestationStatement)
+		assert.Nil(t, result)
 	})
 }
