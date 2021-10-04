@@ -33,6 +33,29 @@ type ECDSAPublicKey struct {
 	verify    ecdsaVerifyFunc
 }
 
+func NewECDSAPublicKey(
+	algorithm Algorithm,
+	publicKey ecdsa.PublicKey,
+) (*ECDSAPublicKey, error) {
+	var verify ecdsaVerifyFunc
+	switch algorithm {
+	case AlgorithmES256:
+		verify = getECDSAVerifyFunc(crypto.SHA256)
+	case AlgorithmES384:
+		verify = getECDSAVerifyFunc(crypto.SHA384)
+	case AlgorithmES512:
+		verify = getECDSAVerifyFunc(crypto.SHA512)
+	default:
+		return nil, fmt.Errorf("%w: %v", algorithm)
+	}
+
+	return &ECDSAPublicKey{
+		algorithm: algorithm,
+		key:       publicKey,
+		verify:    verify,
+	}, nil
+}
+
 // UnmarshalECDSAPublicKey unmarshals an ECDSA key using the COSE_Key format.
 func UnmarshalECDSAPublicKey(raw []byte) (key *ECDSAPublicKey, remaining []byte, err error) {
 	var obj publicKeyStructureEC2
@@ -48,18 +71,6 @@ func UnmarshalECDSAPublicKey(raw []byte) (key *ECDSAPublicKey, remaining []byte,
 		return nil, nil, fmt.Errorf("%w: %v", ErrUnsupportedKeyType, obj.Type)
 	}
 
-	var verify ecdsaVerifyFunc
-	switch obj.Algorithm {
-	case AlgorithmES256:
-		verify = getECDSAVerifyFunc(crypto.SHA256)
-	case AlgorithmES384:
-		verify = getECDSAVerifyFunc(crypto.SHA384)
-	case AlgorithmES512:
-		verify = getECDSAVerifyFunc(crypto.SHA512)
-	default:
-		return nil, nil, fmt.Errorf("%w: %v", ErrUnsupportedAlgorithm, obj.Algorithm)
-	}
-
 	var curve elliptic.Curve
 	switch obj.Curve {
 	case CurveP256:
@@ -72,14 +83,15 @@ func UnmarshalECDSAPublicKey(raw []byte) (key *ECDSAPublicKey, remaining []byte,
 		return nil, nil, fmt.Errorf("%w: %v", ErrUnsupportedCurve, obj.Curve)
 	}
 
-	key = &ECDSAPublicKey{
-		algorithm: obj.Algorithm,
-		key: ecdsa.PublicKey{
-			Curve: curve,
-			X:     big.NewInt(0).SetBytes(obj.XCoordinate),
-			Y:     big.NewInt(0).SetBytes(obj.YCoordinate),
-		},
-		verify: verify,
+	publicKey := ecdsa.PublicKey{
+		Curve: curve,
+		X:     big.NewInt(0).SetBytes(obj.XCoordinate),
+		Y:     big.NewInt(0).SetBytes(obj.YCoordinate),
+	}
+
+	key, err = NewECDSAPublicKey(obj.Algorithm, publicKey)
+	if err != nil {
+		return nil, nil, err
 	}
 	remaining = raw[decoder.NumBytesRead():]
 	return key, remaining, nil
@@ -98,6 +110,30 @@ func (key ECDSAPublicKey) CryptoPublicKey() crypto.PublicKey {
 // Type returns EC2.
 func (ECDSAPublicKey) Type() KeyType {
 	return KeyTypeElliptic
+}
+
+// Marshal marshals the key.
+func (key ECDSAPublicKey) Marshal() ([]byte, error) {
+	var curve Curve
+	switch key.key.Curve {
+	case elliptic.P256():
+		curve = CurveP256
+	case elliptic.P384():
+		curve = CurveP384
+	case elliptic.P521():
+		curve = CurveP521
+	default:
+		return nil, fmt.Errorf("%w: %v", ErrUnsupportedCurve, key.key.Curve)
+	}
+
+	obj := publicKeyStructureEC2{
+		Type:        key.Type(),
+		Algorithm:   key.Algorithm(),
+		Curve:       curve,
+		XCoordinate: key.key.X.Bytes(),
+		YCoordinate: key.key.Y.Bytes(),
+	}
+	return cbor.Marshal(obj)
 }
 
 // Verify returns true if the signature is a valid ECDSA signature for data.

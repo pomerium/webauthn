@@ -1,10 +1,13 @@
 package webauthn
 
 import (
+	"bytes"
+	"crypto/rand"
 	"crypto/subtle"
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"io"
 )
 
 // AAGUIDSize is the number of bytes of an AAGUID in the AttestedCredentialData.
@@ -12,6 +15,15 @@ const AAGUIDSize = 16
 
 // AAGUID is the Authenticator Attestation GUID.
 type AAGUID [AAGUIDSize]byte
+
+func newRandomAAGUID() AAGUID {
+	var aaguid AAGUID
+	_, err := io.ReadFull(rand.Reader, aaguid[:])
+	if err != nil {
+		panic(err)
+	}
+	return aaguid
+}
 
 // Equals returns true if the AAGUIDs match.
 func (aaguid AAGUID) Equals(other AAGUID) bool {
@@ -70,4 +82,26 @@ func UnmarshalAttestedCredentialData(raw []byte) (data *AttestedCredentialData, 
 	}
 
 	return data, raw, nil
+}
+
+// Marshal marshals the attested credential data in the format described in Unmarshal.
+func (attestedCredentialData *AttestedCredentialData) Marshal() ([]byte, error) {
+	if attestedCredentialData == nil {
+		return nil, fmt.Errorf("nil receiver")
+	}
+
+	var buf bytes.Buffer
+	if err := write(&buf, attestedCredentialData.AAGUID[:]...); err != nil {
+		return nil, err
+	}
+	if err := writeUint16(&buf, uint16(len(attestedCredentialData.CredentialID))); err != nil {
+		return nil, err
+	}
+	if err := write(&buf, attestedCredentialData.CredentialID...); err != nil {
+		return nil, err
+	}
+	if err := write(&buf, attestedCredentialData.CredentialPublicKey...); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
 }

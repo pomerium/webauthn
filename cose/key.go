@@ -55,6 +55,7 @@ type publicKeyStructureRSA struct {
 type PublicKey interface {
 	Algorithm() Algorithm
 	CryptoPublicKey() crypto.PublicKey
+	Marshal() ([]byte, error)
 	Type() KeyType
 	Verify(data, signature []byte) error
 }

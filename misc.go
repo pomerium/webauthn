@@ -2,6 +2,8 @@ package webauthn
 
 import (
 	"bytes"
+	"encoding/binary"
+	"io"
 
 	"github.com/fxamacker/cbor/v2"
 )
@@ -27,4 +29,23 @@ func extractCBOR(data []byte) (cborData, remaining []byte, err error) {
 		return nil, nil, err
 	}
 	return data[:decoder.NumBytesRead()], data[decoder.NumBytesRead():], nil
+}
+
+func write(w io.Writer, bs ...byte) error {
+	_, err := w.Write(bs)
+	return err
+}
+
+func writeUint16(w io.Writer, v uint16) error {
+	var buf [2]byte
+	binary.BigEndian.PutUint16(buf[:], v)
+	_, err := w.Write(buf[:])
+	return err
+}
+
+func writeUint32(w io.Writer, v uint32) error {
+	var buf [4]byte
+	binary.BigEndian.PutUint32(buf[:], v)
+	_, err := w.Write(buf[:])
+	return err
 }
