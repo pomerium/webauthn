@@ -15,7 +15,7 @@ func VerifyAppleAttestationStatement(
 	attestationObject *AttestationObject,
 	clientDataJSONHash ClientDataJSONHash,
 ) error {
-	// Verify that attStmt is valid CBOR conforming to the syntax defined above and perform CBOR decoding on it to
+	// 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform CBOR decoding on it to
 	// extract the contained fields.
 	// - the attestationStatement has already been CBOR decoded by this point.
 
