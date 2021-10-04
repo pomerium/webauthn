@@ -33,6 +33,7 @@ type ECDSAPublicKey struct {
 	verify    ecdsaVerifyFunc
 }
 
+// NewECDSAPublicKey creates a new ECDSAPublicKey from an existing key.
 func NewECDSAPublicKey(
 	algorithm Algorithm,
 	publicKey ecdsa.PublicKey,
@@ -46,7 +47,7 @@ func NewECDSAPublicKey(
 	case AlgorithmES512:
 		verify = getECDSAVerifyFunc(crypto.SHA512)
 	default:
-		return nil, fmt.Errorf("%w: %v", algorithm)
+		return nil, fmt.Errorf("%w: %v", ErrUnsupportedAlgorithm, algorithm)
 	}
 
 	return &ECDSAPublicKey{
@@ -104,7 +105,7 @@ func (key ECDSAPublicKey) Algorithm() Algorithm {
 
 // CryptoPublicKey returns the crypto ECDSA public key.
 func (key ECDSAPublicKey) CryptoPublicKey() crypto.PublicKey {
-	return key.key
+	return &key.key
 }
 
 // Type returns EC2.

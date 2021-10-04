@@ -63,8 +63,8 @@ func UnmarshalKeyDescription(raw []byte) (keyDescription *KeyDescription, remain
 }
 
 // Marshal marshals an android key description to an ASN.1 encoded slice of bytes.
-func (KeyDescription *KeyDescription) Marshal() ([]byte, error) {
-	return asn1.Marshal(KeyDescription)
+func (keyDescription KeyDescription) Marshal() ([]byte, error) {
+	return asn1.Marshal(keyDescription)
 }
 
 // A KeyMasterPurpose describe the purpose of a key (or pair).

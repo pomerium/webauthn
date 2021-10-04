@@ -51,7 +51,7 @@ func TestUnmarshalECDSAPublicKey(t *testing.T) {
 			require.NoError(t, err)
 			testCases = append(testCases, TestCase{
 				Name:      alg.String() + " " + curve.String(),
-				PublicKey: *genKey.Public().(*ecdsa.PublicKey),
+				PublicKey: genKey.Public().(*ecdsa.PublicKey),
 				RawKey:    rawKey,
 				Algorithm: alg,
 			})

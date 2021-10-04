@@ -50,7 +50,7 @@ func VerifyAndroidKeyAttestationStatement(
 	// attestedCredentialData in authenticatorData.
 	err = verifyAndroidKeyAttestationStatementCredentialPublicKey(
 		certificate.PublicKey,
-		publicKey,
+		publicKey.CryptoPublicKey(),
 	)
 	if err != nil {
 		return err
@@ -101,7 +101,7 @@ func verifyAndroidKeyAttestationStatementCredentialPublicKey(
 		return fmt.Errorf("%w: unsupported key type: %T", ErrInvalidAttestationStatement, certificatePublicKey)
 	}
 
-	if withEqual.Equal(credentialPublicKey) {
+	if !withEqual.Equal(credentialPublicKey) {
 		return fmt.Errorf("%w: mismatched public keys", ErrInvalidAttestationStatement)
 	}
 	return nil
