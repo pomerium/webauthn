@@ -15,6 +15,10 @@ func VerifyAppleAttestationStatement(
 	attestationObject *AttestationObject,
 	clientDataJSONHash ClientDataJSONHash,
 ) error {
+	// 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform CBOR decoding on it to
+	// extract the contained fields.
+	// - the attestationStatement has already been CBOR decoded by this point.
+
 	certificate, err := attestationObject.Statement.UnmarshalCertificate()
 	if err != nil {
 		return fmt.Errorf("%w: %s", ErrInvalidAttestationStatement, err)
@@ -48,15 +52,10 @@ func VerifyAppleAttestationStatement(
 	}
 
 	// 5. Verify that the credential public key equals the Subject Public Key of credCert.
-	err = verifyAppleAttestationStatementCredentialPublicKey(
+	return verifyAppleAttestationStatementCredentialPublicKey(
 		certificate.PublicKey,
 		publicKey,
 	)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func verifyAppleAttestationStatementCredentialPublicKey(
