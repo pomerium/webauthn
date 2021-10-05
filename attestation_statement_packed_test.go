@@ -9,7 +9,7 @@ import (
 
 func TestVerifyPackedAttestationStatement(t *testing.T) {
 	t.Run("valid", func(t *testing.T) {
-		for _, name := range []string{"Packed", "Packed512"} {
+		for _, name := range []string{"Packed", "Packed512", "Windows"} {
 			response := readTestAuthenticatorAttestationResponse(t, name)
 			attestationObject, err := response.UnmarshalAttestationObject()
 			require.NoError(t, err)
