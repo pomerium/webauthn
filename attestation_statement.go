@@ -106,6 +106,8 @@ func VerifyAttestationStatement(
 	switch attestationObject.Format {
 	case AttestationFormatAndroidKey:
 		return VerifyAndroidKeyAttestationStatement(attestationObject, clientDataJSONHash)
+	case AttestationFormatAndroidSafetyNet:
+		return VerifyAndroidSafetyNetAttestationStatement(attestationObject, clientDataJSONHash)
 	case AttestationFormatApple:
 		return VerifyAppleAttestationStatement(attestationObject, clientDataJSONHash)
 	case AttestationFormatPacked:
