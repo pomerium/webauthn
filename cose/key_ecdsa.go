@@ -26,6 +26,19 @@ func getECDSAVerifyFunc(hash crypto.Hash) ecdsaVerifyFunc {
 	}
 }
 
+// RawX962ECC represents the Raw ANSI X9.62 public key format for ALG_KEY_ECC_X962_RAW as defined in:
+// https://fidoalliance.org/specs/fido-v2.0-id-20180227/fido-registry-v2.0-id-20180227.html#public-key-representation-formats
+type RawX962ECC [65]byte
+
+// NewRawX962ECC creates a new RawX962ECC.
+func NewRawX962ECC(x, y [32]byte) RawX962ECC {
+	var arr RawX962ECC
+	arr[0] = 0x04
+	copy(arr[1:], x[:])
+	copy(arr[1+32:], y[:])
+	return arr
+}
+
 // An ECDSAPublicKey is a public key using ECDSA.
 type ECDSAPublicKey struct {
 	algorithm Algorithm
@@ -106,6 +119,14 @@ func (key ECDSAPublicKey) Algorithm() Algorithm {
 // CryptoPublicKey returns the crypto ECDSA public key.
 func (key ECDSAPublicKey) CryptoPublicKey() crypto.PublicKey {
 	return &key.key
+}
+
+// RawX962ECC returns the RawX962ECC formatted public key.
+func (key ECDSAPublicKey) RawX962ECC() RawX962ECC {
+	var x, y [32]byte
+	copy(x[:], key.key.X.Bytes())
+	copy(y[:], key.key.Y.Bytes())
+	return NewRawX962ECC(x, y)
 }
 
 // Type returns EC2.
