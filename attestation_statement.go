@@ -112,6 +112,8 @@ func VerifyAttestationStatement(
 		return VerifyAppleAttestationStatement(attestationObject, clientDataJSONHash)
 	case AttestationFormatFIDOU2F:
 		return VerifyFIDOU2FAttestationStatement(attestationObject, clientDataJSONHash)
+	case AttestationFormatNone:
+		return VerifyNoneAttestationStatement(attestationObject, clientDataJSONHash)
 	case AttestationFormatPacked:
 		return VerifyPackedAttestationStatement(attestationObject, clientDataJSONHash)
 	default:
