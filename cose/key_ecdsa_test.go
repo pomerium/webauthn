@@ -3,6 +3,7 @@ package cose
 import (
 	"crypto"
 	"crypto/ecdsa"
+	"crypto/elliptic"
 	"crypto/sha256"
 	"crypto/sha512"
 	"math/rand"
@@ -12,6 +13,22 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestMarshalECDSAPublicKey(t *testing.T) {
+	random := rand.New(rand.NewSource(1))
+	privateKey, err := ecdsa.GenerateKey(elliptic.P256(), random)
+	require.NoError(t, err)
+
+	key1, err := NewECDSAPublicKey(AlgorithmES256, privateKey.PublicKey)
+	assert.NoError(t, err)
+
+	rawKey, err := key1.Marshal()
+	assert.NoError(t, err)
+
+	key2, _, err := UnmarshalECDSAPublicKey(rawKey)
+	assert.NoError(t, err)
+	assert.Equal(t, key1.CryptoPublicKey(), key2.CryptoPublicKey())
+}
 
 func TestUnmarshalECDSAPublicKey(t *testing.T) {
 	random := rand.New(rand.NewSource(1))

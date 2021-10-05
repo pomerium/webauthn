@@ -87,7 +87,7 @@ func UnmarshalAttestedCredentialData(raw []byte) (data *AttestedCredentialData, 
 // Marshal marshals the attested credential data in the format described in Unmarshal.
 func (attestedCredentialData *AttestedCredentialData) Marshal() ([]byte, error) {
 	if attestedCredentialData == nil {
-		return nil, fmt.Errorf("nil receiver")
+		return nil, fmt.Errorf("cannot marshal a nil attested credential")
 	}
 
 	var buf bytes.Buffer
