@@ -110,6 +110,8 @@ func VerifyAttestationStatement(
 		return VerifyAndroidSafetyNetAttestationStatement(attestationObject, clientDataJSONHash)
 	case AttestationFormatApple:
 		return VerifyAppleAttestationStatement(attestationObject, clientDataJSONHash)
+	case AttestationFormatFIDOU2F:
+		return VerifyFIDOU2FAttestationStatement(attestationObject, clientDataJSONHash)
 	case AttestationFormatPacked:
 		return VerifyPackedAttestationStatement(attestationObject, clientDataJSONHash)
 	default:
