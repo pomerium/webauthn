@@ -39,23 +39,14 @@ type RSAPublicKey struct {
 	verify    rsaVerifyFunc
 }
 
-// UnmarshalRSAPublicKey unmarshals an RSA key using the COSE_Key format.
-func UnmarshalRSAPublicKey(raw []byte) (key *RSAPublicKey, remaining []byte, err error) {
-	var obj publicKeyStructureRSA
-	decoder := cbor.NewDecoder(bytes.NewReader(raw))
-	err = decoder.Decode(&obj)
-	if err != nil {
-		return nil, nil, ErrInvalidPublicKey
-	}
-
-	switch obj.Type {
-	case KeyTypeRSA:
-	default:
-		return nil, nil, fmt.Errorf("%w: %v", ErrUnsupportedKeyType, obj.Type)
-	}
+// NewRSAPublicKey creates a new RSAPublicKey.
+func NewRSAPublicKey(
+	algorithm Algorithm,
+	publicKey rsa.PublicKey,
+) (*RSAPublicKey, error) {
 
 	var verify rsaVerifyFunc
-	switch obj.Algorithm {
+	switch algorithm {
 	case AlgorithmRS1:
 		verify = getRSAVerifyPKCS1v15Func(crypto.SHA1)
 	case AlgorithmRS256:
@@ -71,18 +62,41 @@ func UnmarshalRSAPublicKey(raw []byte) (key *RSAPublicKey, remaining []byte, err
 	case AlgorithmPS512:
 		verify = getRSAVerifyPSSFunc(crypto.SHA512)
 	default:
-		return nil, nil, fmt.Errorf("%w: %d", ErrUnsupportedAlgorithm, obj.Algorithm)
+		return nil, fmt.Errorf("%w: %d", ErrUnsupportedAlgorithm, algorithm)
 	}
 
-	key = &RSAPublicKey{
-		algorithm: obj.Algorithm,
-		key: rsa.PublicKey{
-			// All numbers are stored as unsigned, big-endian integers. This is the same format
-			// as big.Int.
-			N: big.NewInt(0).SetBytes(obj.Modulus),
-			E: int(big.NewInt(0).SetBytes(obj.Exponent).Int64()),
-		},
-		verify: verify,
+	return &RSAPublicKey{
+		algorithm: algorithm,
+		key:       publicKey,
+		verify:    verify,
+	}, nil
+}
+
+// UnmarshalRSAPublicKey unmarshals an RSA key using the COSE_Key format.
+func UnmarshalRSAPublicKey(raw []byte) (key *RSAPublicKey, remaining []byte, err error) {
+	var obj publicKeyStructureRSA
+	decoder := cbor.NewDecoder(bytes.NewReader(raw))
+	err = decoder.Decode(&obj)
+	if err != nil {
+		return nil, nil, ErrInvalidPublicKey
+	}
+
+	switch obj.Type {
+	case KeyTypeRSA:
+	default:
+		return nil, nil, fmt.Errorf("%w: %v", ErrUnsupportedKeyType, obj.Type)
+	}
+
+	publicKey := rsa.PublicKey{
+		// All numbers are stored as unsigned, big-endian integers. This is the same format
+		// as big.Int.
+		N: big.NewInt(0).SetBytes(obj.Modulus),
+		E: int(big.NewInt(0).SetBytes(obj.Exponent).Int64()),
+	}
+
+	key, err = NewRSAPublicKey(obj.Algorithm, publicKey)
+	if err != nil {
+		return nil, nil, err
 	}
 	remaining = raw[decoder.NumBytesRead():]
 	err = nil
@@ -102,6 +116,17 @@ func (key RSAPublicKey) CryptoPublicKey() crypto.PublicKey {
 // Type returns RSA.
 func (RSAPublicKey) Type() KeyType {
 	return KeyTypeRSA
+}
+
+// Marshal marshals the key.
+func (key RSAPublicKey) Marshal() ([]byte, error) {
+	obj := publicKeyStructureRSA{
+		Type:      key.Type(),
+		Algorithm: key.Algorithm(),
+		Modulus:   key.key.N.Bytes(),
+		Exponent:  big.NewInt(int64(key.key.E)).Bytes(),
+	}
+	return cbor.Marshal(obj)
 }
 
 // Verify returns true if the signature is a valid RSA signature for data.

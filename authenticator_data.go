@@ -1,6 +1,7 @@
 package webauthn
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/binary"
 	"errors"
@@ -83,4 +84,33 @@ func UnmarshalAuthenticatorData(raw []byte) (data *AuthenticatorData, remaining 
 	}
 
 	return data, raw, nil
+}
+
+// Marshal marshals authenticator data according to the format defined in Unmarshal.
+func (authenticatorData *AuthenticatorData) Marshal() ([]byte, error) {
+	var buf bytes.Buffer
+	if err := write(&buf, authenticatorData.RPIDHash[:]...); err != nil {
+		return nil, err
+	}
+	if err := write(&buf, byte(authenticatorData.Flags)); err != nil {
+		return nil, err
+	}
+	if err := writeUint32(&buf, authenticatorData.SignCount); err != nil {
+		return nil, err
+	}
+	if authenticatorData.Flags.AttestedCredentialDataIncluded() {
+		bs, err := authenticatorData.AttestedCredentialData.Marshal()
+		if err != nil {
+			return nil, err
+		}
+		if err := write(&buf, bs...); err != nil {
+			return nil, err
+		}
+	}
+	if authenticatorData.Flags.ExtensionDataIncluded() {
+		if err := write(&buf, authenticatorData.Extensions...); err != nil {
+			return nil, err
+		}
+	}
+	return buf.Bytes(), nil
 }

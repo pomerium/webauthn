@@ -70,6 +70,17 @@ func (EdDSAPublicKey) Type() KeyType {
 	return KeyTypeOctet
 }
 
+// Marshal marshals the key.
+func (key EdDSAPublicKey) Marshal() ([]byte, error) {
+	obj := publicKeyStructureOKP{
+		Type:        key.Type(),
+		Algorithm:   key.Algorithm(),
+		Curve:       CurveEd25519,
+		XCoordinate: key.key,
+	}
+	return cbor.Marshal(obj)
+}
+
 // Verify returns true if the signature is a valid EdDSA signature for data.
 func (key EdDSAPublicKey) Verify(data, signature []byte) error {
 	if !ed25519.Verify(key.key, data, signature) {
