@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/pomerium/webauthn/android"
+
 	"github.com/square/go-jose/v3/jwt"
 )
 
