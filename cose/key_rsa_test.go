@@ -12,6 +12,22 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestMarshal(t *testing.T) {
+	random := rand.New(rand.NewSource(1))
+	privateKey, err := rsa.GenerateKey(random, 2048)
+	require.NoError(t, err)
+
+	key1, err := NewRSAPublicKey(AlgorithmRS256, privateKey.PublicKey)
+	assert.NoError(t, err)
+
+	rawKey, err := key1.Marshal()
+	assert.NoError(t, err)
+
+	key2, _, err := UnmarshalRSAPublicKey(rawKey)
+	assert.NoError(t, err)
+	assert.Equal(t, key1.CryptoPublicKey(), key2.CryptoPublicKey())
+}
+
 func TestUnmarshalRSAPublicKey(t *testing.T) {
 	random := rand.New(rand.NewSource(1))
 

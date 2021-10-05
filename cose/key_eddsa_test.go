@@ -11,6 +11,21 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestMarshalEdDSAPublicKey(t *testing.T) {
+	random := rand.New(rand.NewSource(1))
+	publicKey, _, err := ed25519.GenerateKey(random)
+	require.NoError(t, err)
+
+	key1 := &EdDSAPublicKey{key: publicKey}
+
+	rawKey, err := key1.Marshal()
+	assert.NoError(t, err)
+
+	key2, _, err := UnmarshalEdDSAPublicKey(rawKey)
+	assert.NoError(t, err)
+	assert.Equal(t, key1.CryptoPublicKey(), key2.CryptoPublicKey())
+}
+
 func TestUnmarshalEdDSAPublicKey(t *testing.T) {
 	random := rand.New(rand.NewSource(1))
 

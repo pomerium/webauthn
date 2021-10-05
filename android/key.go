@@ -10,8 +10,8 @@ type AuthorizationList struct {
 	KeySize                     int                 `asn1:"tag:3,explicit,optional"`
 	Digest                      []int               `asn1:"tag:5,explicit,set,optional"`
 	Padding                     []int               `asn1:"tag:6,explicit,set,optional"`
-	EcCurve                     int                 `asn1:"tag:10,explicit,optional"`
-	RsaPublicExponent           int                 `asn1:"tag:200,explicit,optional"`
+	ECCurve                     int                 `asn1:"tag:10,explicit,optional"`
+	RSAPublicExponent           int                 `asn1:"tag:200,explicit,optional"`
 	RollbackResistance          asn1.Flag           `asn1:"tag:303,explicit,optional"`
 	ActiveDateTime              int                 `asn1:"tag:400,explicit,optional"`
 	OriginationExpireDateTime   int                 `asn1:"tag:401,explicit,optional"`
@@ -28,15 +28,15 @@ type AuthorizationList struct {
 	CreationDateTime            int                 `asn1:"tag:701,explicit,optional"`
 	Origin                      KeyOrigin           `asn1:"tag:702,explicit,optional"`
 	RootOfTrust                 RootOfTrust         `asn1:"tag:704,explicit,optional"`
-	OsVersion                   int                 `asn1:"tag:705,explicit,optional"`
-	OsPatchLevel                int                 `asn1:"tag:706,explicit,optional"`
+	OSVersion                   int                 `asn1:"tag:705,explicit,optional"`
+	OSPatchLevel                int                 `asn1:"tag:706,explicit,optional"`
 	AttestationApplicationID    []byte              `asn1:"tag:709,explicit,optional"`
 	AttestationIDBrand          []byte              `asn1:"tag:710,explicit,optional"`
 	AttestationIDDevice         []byte              `asn1:"tag:711,explicit,optional"`
 	AttestationIDProduct        []byte              `asn1:"tag:712,explicit,optional"`
 	AttestationIDSerial         []byte              `asn1:"tag:713,explicit,optional"`
-	AttestationIDImei           []byte              `asn1:"tag:714,explicit,optional"`
-	AttestationIDMeid           []byte              `asn1:"tag:715,explicit,optional"`
+	AttestationIDIMEID          []byte              `asn1:"tag:714,explicit,optional"`
+	AttestationIDMEID           []byte              `asn1:"tag:715,explicit,optional"`
 	AttestationIDManufacturer   []byte              `asn1:"tag:716,explicit,optional"`
 	AttestationIDModel          []byte              `asn1:"tag:717,explicit,optional"`
 	VendorPatchLevel            int                 `asn1:"tag:718,explicit,optional"`
