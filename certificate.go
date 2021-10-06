@@ -19,10 +19,21 @@ var (
 )
 
 var (
-	oidAAGUID     = asn1.ObjectIdentifier{1, 3, 6, 1, 4, 1, 45724, 1, 1, 4}
-	oidAndroidKey = asn1.ObjectIdentifier{1, 3, 6, 1, 4, 1, 11129, 2, 1, 17}
-	oidAppleNonce = asn1.ObjectIdentifier{1, 2, 840, 113635, 100, 8, 2}
+	oidAAGUID         = asn1.ObjectIdentifier{1, 3, 6, 1, 4, 1, 45724, 1, 1, 4}
+	oidAIKCertificate = asn1.ObjectIdentifier{2, 23, 133, 8, 3}
+	oidAndroidKey     = asn1.ObjectIdentifier{1, 3, 6, 1, 4, 1, 11129, 2, 1, 17}
+	oidAppleNonce     = asn1.ObjectIdentifier{1, 2, 840, 113635, 100, 8, 2}
 )
+
+// certificateHasAIK returns true if the certificate has the AIK extended key usage.
+func certificateHasAIK(certificate *x509.Certificate) bool {
+	for _, eku := range certificate.UnknownExtKeyUsage {
+		if eku.Equal(oidAIKCertificate) {
+			return true
+		}
+	}
+	return false
+}
 
 func getCertificateAAGUID(certificate *x509.Certificate) (AAGUID, error) {
 	for _, extension := range certificate.Extensions {

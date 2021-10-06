@@ -15,10 +15,14 @@ func VerifyAndroidKeyAttestationStatement(
 	attestationObject *AttestationObject,
 	clientDataJSONHash ClientDataJSONHash,
 ) error {
-	certificate, err := attestationObject.Statement.UnmarshalCertificate()
+	certificates, err := attestationObject.Statement.UnmarshalCertificates()
 	if err != nil {
 		return fmt.Errorf("%w: %s", ErrInvalidAttestationStatement, err)
 	}
+	if len(certificates) < 1 {
+		return fmt.Errorf("%w: missing x5c certificate", ErrInvalidAttestationStatement)
+	}
+	certificate := certificates[0]
 
 	authenticatorData, err := attestationObject.UnmarshalAuthenticatorData()
 	if err != nil {

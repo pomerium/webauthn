@@ -3,6 +3,7 @@
 package cose
 
 import (
+	"crypto"
 	"crypto/elliptic"
 	"crypto/x509"
 )
@@ -35,6 +36,24 @@ const (
 	// AlgorithmES256 indicates ECDSA w/ SHA-256.
 	AlgorithmES256 Algorithm = -7
 )
+
+// Hash returns the cryptographic Hash used by the algorithm.
+func (alg Algorithm) Hash() crypto.Hash {
+	switch alg {
+	case AlgorithmRS1:
+		return crypto.SHA1
+	case AlgorithmRS512, AlgorithmPS512, AlgorithmES512:
+		return crypto.SHA512
+	case AlgorithmRS384, AlgorithmPS384, AlgorithmES384:
+		return crypto.SHA384
+	case AlgorithmRS256, AlgorithmPS256, AlgorithmES256:
+		return crypto.SHA256
+	case AlgorithmEdDSA:
+		return 0 // no hashing
+	default:
+		return 0 // unknown
+	}
+}
 
 // X509SignatureAlgorithm returns the corresponding x509.SignatureAlgorithm for the Algorithm.
 func (alg Algorithm) X509SignatureAlgorithm() x509.SignatureAlgorithm {
