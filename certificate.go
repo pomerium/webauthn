@@ -9,6 +9,13 @@ import (
 	"github.com/pomerium/webauthn/android"
 )
 
+// AppleCertPool is the x509 certificate pool used to verify apple attestation.
+var AppleCertPool = x509.NewCertPool()
+
+func init() {
+	_ = AppleCertPool.AppendCertsFromPEM(AppleWebAuthnRootCAPEM)
+}
+
 var (
 	errInvalidAndroidKey    = errors.New("invalid android key")
 	errInvalidAppleNonce    = errors.New("invalid apple nonce")

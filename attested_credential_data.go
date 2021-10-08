@@ -3,18 +3,19 @@ package webauthn
 import (
 	"bytes"
 	"crypto/rand"
-	"crypto/subtle"
 	"encoding/binary"
 	"errors"
 	"fmt"
 	"io"
+
+	"github.com/pomerium/webauthn/fido"
 )
 
 // AAGUIDSize is the number of bytes of an AAGUID in the AttestedCredentialData.
-const AAGUIDSize = 16
+const AAGUIDSize = fido.AAGUIDSize
 
 // AAGUID is the Authenticator Attestation GUID.
-type AAGUID [AAGUIDSize]byte
+type AAGUID = fido.AAGUID
 
 func newRandomAAGUID() AAGUID {
 	var aaguid AAGUID
@@ -23,11 +24,6 @@ func newRandomAAGUID() AAGUID {
 		panic(err)
 	}
 	return aaguid
-}
-
-// Equals returns true if the AAGUIDs match.
-func (aaguid AAGUID) Equals(other AAGUID) bool {
-	return subtle.ConstantTimeCompare(aaguid[:], other[:]) == 1
 }
 
 // ErrInvalidAttestedCredentialData indicates the attested credential data is invalid.

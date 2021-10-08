@@ -3,6 +3,7 @@ package webauthn
 import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
+	"crypto/x509"
 	"fmt"
 
 	"github.com/pomerium/webauthn/cose"
@@ -13,7 +14,7 @@ import (
 func VerifyFIDOU2FAttestationStatement(
 	attestationObject *AttestationObject,
 	clientDataJSONHash ClientDataJSONHash,
-) error {
+) (*VerifyAttestationStatementResult, error) {
 	// 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform CBOR decoding on it to
 	//    extract the contained fields.
 	//    - by this point the attestation statement has already been CBOR decoded
@@ -23,17 +24,17 @@ func VerifyFIDOU2FAttestationStatement(
 	//    P-256 curve, terminate this algorithm and return an appropriate error.
 	certificates, err := attestationObject.Statement.UnmarshalCertificates()
 	if err != nil {
-		return fmt.Errorf("%w: invalid x5c certificate: %s", ErrInvalidAttestationStatement, err)
+		return nil, fmt.Errorf("%w: invalid x5c certificate: %s", ErrInvalidAttestationStatement, err)
 	} else if len(certificates) != 1 {
-		return fmt.Errorf("%w: expected exactly 1 x5c certificate", ErrInvalidAttestationStatement)
+		return nil, fmt.Errorf("%w: expected exactly 1 x5c certificate", ErrInvalidAttestationStatement)
 	}
 	certificate := certificates[0]
 	publicKey, ok := certificate.PublicKey.(*ecdsa.PublicKey)
 	if !ok {
-		return fmt.Errorf("%w: invalid x5c certificate, only ECDSA keys are supported", ErrInvalidAttestationStatement)
+		return nil, fmt.Errorf("%w: invalid x5c certificate, only ECDSA keys are supported", ErrInvalidAttestationStatement)
 	}
 	if publicKey.Curve != elliptic.P256() {
-		return fmt.Errorf("%w: invalid x5c certificate, only the P-256 curve is supported",
+		return nil, fmt.Errorf("%w: invalid x5c certificate, only the P-256 curve is supported",
 			ErrInvalidAttestationStatement)
 	}
 
@@ -41,7 +42,7 @@ func VerifyFIDOU2FAttestationStatement(
 	//    authenticatorData.attestedCredentialData.
 	authenticatorData, err := attestationObject.UnmarshalAuthenticatorData()
 	if err != nil {
-		return fmt.Errorf("%w: %s", ErrInvalidAttestationStatement, err)
+		return nil, fmt.Errorf("%w: %s", ErrInvalidAttestationStatement, err)
 	}
 	rpIDHash := authenticatorData.RPIDHash
 	credentialID := authenticatorData.AttestedCredentialData.CredentialID
@@ -50,7 +51,7 @@ func VerifyFIDOU2FAttestationStatement(
 	//    format (see ALG_KEY_ECC_X962_RAW in Section 3.6.2 Public Key Representation Formats of [FIDO-Registry]).
 	credentialPublicKey, _, err := cose.UnmarshalPublicKey(authenticatorData.AttestedCredentialData.CredentialPublicKey)
 	if err != nil {
-		return fmt.Errorf("%w: %s", ErrInvalidAttestationStatement, err)
+		return nil, fmt.Errorf("%w: %s", ErrInvalidAttestationStatement, err)
 	}
 
 	//    4a. Let x be the value corresponding to the "-2" key (representing x coordinate) in credentialPublicKey, and
@@ -62,7 +63,7 @@ func VerifyFIDOU2FAttestationStatement(
 	//        return an appropriate error.
 	ecdsaKey, ok := credentialPublicKey.(*cose.ECDSAPublicKey)
 	if !ok {
-		return fmt.Errorf("%w: only ECDSA keys are supported", ErrInvalidAttestationStatement)
+		return nil, fmt.Errorf("%w: only ECDSA keys are supported", ErrInvalidAttestationStatement)
 	}
 	//    4c. Let publicKeyU2F be the concatenation 0x04 || x || y.
 	publicKeyU2F := ecdsaKey.RawX962ECC()
@@ -86,8 +87,11 @@ func VerifyFIDOU2FAttestationStatement(
 		signature,
 	)
 	if err != nil {
-		return fmt.Errorf("%w: invalid signature, %s", ErrInvalidAttestationStatement, err)
+		return nil, fmt.Errorf("%w: invalid signature, %s", ErrInvalidAttestationStatement, err)
 	}
 
-	return nil
+	return &VerifyAttestationStatementResult{
+		Type:       AttestationTypeUnknown,
+		TrustPaths: [][]*x509.Certificate{certificates},
+	}, nil
 }

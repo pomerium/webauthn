@@ -13,20 +13,20 @@ import (
 func VerifyTPMAttestationStatement(
 	attestationObject *AttestationObject,
 	clientDataJSONHash ClientDataJSONHash,
-) error {
+) (*VerifyAttestationStatementResult, error) {
 	aikCerts, err := attestationObject.Statement.UnmarshalCertificates()
 	if err != nil {
-		return fmt.Errorf("%w: %s", ErrInvalidAttestationStatement, err)
+		return nil, fmt.Errorf("%w: %s", ErrInvalidAttestationStatement, err)
 	}
 
 	tpmCertInfo, err := attestationObject.Statement.UnmarshalCertInfo()
 	if err != nil {
-		return fmt.Errorf("%w: %s", ErrInvalidAttestationStatement, err)
+		return nil, fmt.Errorf("%w: %s", ErrInvalidAttestationStatement, err)
 	}
 
 	tpmPubArea, err := attestationObject.Statement.UnmarshalPubArea()
 	if err != nil {
-		return fmt.Errorf("%w: %s", ErrInvalidAttestationStatement, err)
+		return nil, fmt.Errorf("%w: %s", ErrInvalidAttestationStatement, err)
 	}
 
 	// Verify that the public key specified by the parameters and unique fields of pubArea is identical to the
@@ -36,7 +36,7 @@ func VerifyTPMAttestationStatement(
 		tpmPubArea,
 	)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Validate that certInfo is valid
@@ -48,7 +48,7 @@ func VerifyTPMAttestationStatement(
 		tpmCertInfo,
 	)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Verify the attestation statement certificate requirements
@@ -56,10 +56,13 @@ func VerifyTPMAttestationStatement(
 		aikCerts,
 	)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return &VerifyAttestationStatementResult{
+		Type:       AttestationTypeAttestationCA,
+		TrustPaths: [][]*x509.Certificate{aikCerts},
+	}, nil
 }
 
 func verifyTPMAttestationStatementCertificateRequirements(

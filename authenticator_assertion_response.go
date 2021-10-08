@@ -3,6 +3,7 @@ package webauthn
 import (
 	"crypto/sha256"
 	"encoding/json"
+	"fmt"
 )
 
 // The AuthenticatorAssertionResponse represents an authenticator's response to a client’s request for generation
@@ -42,4 +43,9 @@ func (response *AuthenticatorAssertionResponse) UnmarshalClientData() (*Collecte
 		return nil, err
 	}
 	return &data, nil
+}
+
+// Verify verifies the AuthenticatorAssertionResponse.
+func (response *AuthenticatorAssertionResponse) Verify() error {
+	return fmt.Errorf("not implemented")
 }

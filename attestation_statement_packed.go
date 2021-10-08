@@ -14,27 +14,32 @@ import (
 func VerifyPackedAttestationStatement(
 	attestationObject *AttestationObject,
 	clientDataJSONHash ClientDataJSONHash,
-) error {
+) (*VerifyAttestationStatementResult, error) {
 	if attestationObject.Format != AttestationFormatPacked {
-		return fmt.Errorf("%w: invalid format %s", ErrInvalidAttestationStatement, attestationObject.Format)
+		return nil, fmt.Errorf("%w: invalid format %s", ErrInvalidAttestationStatement, attestationObject.Format)
 	}
+
+	result := new(VerifyAttestationStatementResult)
 
 	certificates, err := attestationObject.Statement.UnmarshalCertificates()
 	if err == nil && len(certificates) > 0 {
+		result.Type = AttestationTypeUnknown
 		certificate := certificates[0]
 		// 2. If x5c is present:
 		err = verifyPackedAttestationStatementCertificate(attestationObject, clientDataJSONHash, certificate)
 	} else if errors.Is(err, ErrMissingCertificate) {
+		result.Type = AttestationTypeSelf
 		// 3. If x5c is not present, self attestation is in use.
 		err = verifyPackedAttestationStatementSelfAttestation(attestationObject, clientDataJSONHash)
 	} else {
-		return fmt.Errorf("%w: invalid certificate: %s", ErrInvalidAttestationStatement, err)
+		return nil, fmt.Errorf("%w: invalid certificate: %s", ErrInvalidAttestationStatement, err)
 	}
 	if err != nil {
-		return err
+		return nil, err
 	}
+	result.TrustPaths = [][]*x509.Certificate{certificates}
 
-	return nil
+	return result, nil
 }
 
 func verifyPackedAttestationStatementCertificate(

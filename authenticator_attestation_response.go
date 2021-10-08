@@ -1,8 +1,18 @@
 package webauthn
 
 import (
+	"context"
 	"crypto/sha256"
+	"crypto/x509"
 	"encoding/json"
+	"fmt"
+)
+
+// Errors
+var (
+	ErrNoneNotAllowed              = fmt.Errorf("the None attestation type is not allowed")
+	ErrSelfNotAllowed              = fmt.Errorf("the Self attestation type is not allowed")
+	ErrInvalidAttestationTrustPath = fmt.Errorf("invalid attestation trust path")
 )
 
 // The AuthenticatorAttestationResponse interface represents the authenticator's response to a client's request for
@@ -43,4 +53,79 @@ func (response *AuthenticatorAttestationResponse) UnmarshalClientData() (*Collec
 		return nil, err
 	}
 	return &data, nil
+}
+
+// Verify verifies the AuthenticatorAttestationResponse.
+func (response *AuthenticatorAttestationResponse) Verify(ctx context.Context, options ...VerifyOption) error {
+	cfg, err := getVerifyConfig(options...)
+	if err != nil {
+		return err
+	}
+
+	attestationObject, err := response.UnmarshalAttestationObject()
+	if err != nil {
+		return err
+	}
+
+	authenticatorData, err := attestationObject.UnmarshalAuthenticatorData()
+	if err != nil {
+		return err
+	}
+
+	result, err := VerifyAttestationStatement(attestationObject, response.GetClientDataJSONHash())
+	if err != nil {
+		return err
+	}
+
+	// "None" has no trust path, so check if it's allowed in the policy.
+	if result.Type == AttestationTypeNone {
+		if cfg.allowNone {
+			return nil
+		}
+		return ErrNoneNotAllowed
+	}
+
+	// "Self" has no trust path, so check if it's allowed in the policy.
+	if result.Type == AttestationTypeSelf {
+		if cfg.allowSelf {
+			return nil
+		}
+		return ErrSelfNotAllowed
+	}
+
+	// All other formats need to be checked against trust anchors.
+	trustAnchors, err := cfg.trustAnchorProvider.GetTrustAnchors(ctx,
+		attestationObject.Format,
+		result.Type,
+		authenticatorData.AttestedCredentialData.AAGUID,
+	)
+	if err != nil {
+		return err
+	}
+
+	for _, trustPath := range result.TrustPaths {
+		if len(trustPath) == 0 {
+			// ignore empty trust paths
+			continue
+		}
+
+		// verify the cert is valid based on the trust anchors
+		vo := x509.VerifyOptions{
+			Roots: trustAnchors,
+		}
+		// if there's more than one certificate, add all the other certificates to
+		// the intermediates
+		if len(trustPath) > 1 {
+			vo.Intermediates = x509.NewCertPool()
+			for _, c := range trustPath[1:] {
+				vo.Intermediates.AddCert(c)
+			}
+		}
+		_, err := trustPath[0].Verify(vo)
+		if err == nil {
+			return nil
+		}
+	}
+
+	return ErrInvalidAttestationTrustPath
 }

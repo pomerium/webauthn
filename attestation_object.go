@@ -19,7 +19,7 @@ type AttestationObject struct {
 	AuthData []byte `json:"authData"`
 	// The Format is the manner in which the signature is represented and the various contextual bindings are
 	// incorporated into the attestation statement by the authenticator.
-	Format string `json:"fmt"`
+	Format AttestationFormat `json:"fmt"`
 	// The Statement is a signed data object, containing statements about a public key credential itself and
 	// the authenticator that created it.
 	Statement AttestationStatement `json:"attStmt,omitempty"`
