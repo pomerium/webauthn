@@ -21,10 +21,13 @@ func VerifyFIDOU2FAttestationStatement(
 	// 2. Check that x5c has exactly one element and let attCert be that element. Let certificate public key be the
 	//    public key conveyed by attCert. If certificate public key is not an Elliptic Curve (EC) public key over the
 	//    P-256 curve, terminate this algorithm and return an appropriate error.
-	certificate, err := attestationObject.Statement.UnmarshalCertificate()
+	certificates, err := attestationObject.Statement.UnmarshalCertificates()
 	if err != nil {
 		return fmt.Errorf("%w: invalid x5c certificate: %s", ErrInvalidAttestationStatement, err)
+	} else if len(certificates) != 1 {
+		return fmt.Errorf("%w: expected exactly 1 x5c certificate", ErrInvalidAttestationStatement)
 	}
+	certificate := certificates[0]
 	publicKey, ok := certificate.PublicKey.(*ecdsa.PublicKey)
 	if !ok {
 		return fmt.Errorf("%w: invalid x5c certificate, only ECDSA keys are supported", ErrInvalidAttestationStatement)

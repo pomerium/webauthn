@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/pomerium/webauthn/cose"
+	"github.com/pomerium/webauthn/tpm"
 )
 
 var (
@@ -13,8 +14,16 @@ var (
 	ErrInvalidAttestationStatement = errors.New("invalid attestation statement")
 	// ErrInvalidCertificate indicates that an attestation statement has an invalid x5c certificate.
 	ErrInvalidCertificate = errors.New("invalid certificate")
+	// ErrInvalidCertInfo indicates that an attestation statement has an invalid certInfo field.
+	ErrInvalidCertInfo = errors.New("invalid certInfo")
+	// ErrInvalidPubArea indicates that an attestation statement has an invalid pubArea field.
+	ErrInvalidPubArea = errors.New("invalid pubArea")
 	// ErrMissingCertificate indicates that an attestation statement is missing an x5c certificate.
 	ErrMissingCertificate = errors.New("missing certificate")
+	// ErrMissingCertInfo indicates that an attestation statement is missing the certInfo field.
+	ErrMissingCertInfo = errors.New("missing certInfo")
+	// ErrMissingPubArea indicates that an attestation statement is missing a pubArea field.
+	ErrMissingPubArea = errors.New("missing pubArea")
 )
 
 // Attestation formats from https://www.w3.org/TR/webauthn-2/#sctn-defined-attestation-formats
@@ -73,28 +82,73 @@ func (attestationStatement AttestationStatement) GetSignature() []byte {
 	return sig
 }
 
-// UnmarshalCertificate unmarshals an X.509 certificate stored in an x5c key.
-func (attestationStatement AttestationStatement) UnmarshalCertificate() (*x509.Certificate, error) {
+// UnmarshalCertificates unmarshals X.509 certificates stored in an x5c key.
+func (attestationStatement AttestationStatement) UnmarshalCertificates() ([]*x509.Certificate, error) {
 	x5c, ok := attestationStatement["x5c"]
 	if !ok {
 		return nil, ErrMissingCertificate
 	}
 
-	if t, ok := x5c.([]interface{}); ok {
-		x5c = t[0]
-	}
-
-	bs, ok := x5c.([]byte)
+	x5cs, ok := x5c.([]interface{})
 	if !ok {
 		return nil, ErrInvalidCertificate
 	}
 
-	cert, err := x509.ParseCertificate(bs)
-	if err != nil {
-		return nil, fmt.Errorf("%w: %s", ErrInvalidCertificate, err)
+	var certificates []*x509.Certificate
+	for _, x5c := range x5cs {
+		bs, ok := x5c.([]byte)
+		if !ok {
+			return nil, ErrInvalidCertificate
+		}
+
+		certificate, err := x509.ParseCertificate(bs)
+		if err != nil {
+			return nil, fmt.Errorf("%w: %s", ErrInvalidCertificate, err)
+		}
+		certificates = append(certificates, certificate)
 	}
 
-	return cert, nil
+	return certificates, nil
+}
+
+// UnmarshalCertInfo unmarshals the TPM certInfo from an attestation statement.
+func (attestationStatement AttestationStatement) UnmarshalCertInfo() (*tpm.AttestationData, error) {
+	certInfo, ok := attestationStatement["certInfo"]
+	if !ok {
+		return nil, ErrMissingCertInfo
+	}
+
+	bs, ok := certInfo.([]byte)
+	if !ok {
+		return nil, ErrInvalidCertInfo
+	}
+
+	attestationData, err := tpm.UnmarshalAttestationData(bs)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %s", ErrInvalidCertInfo, err)
+	}
+
+	return attestationData, nil
+}
+
+// UnmarshalPubArea unmarshals the pubArea field from the attestation statement.
+func (attestationStatement AttestationStatement) UnmarshalPubArea() (*tpm.Public, error) {
+	pubArea, ok := attestationStatement["pubArea"]
+	if !ok {
+		return nil, ErrMissingPubArea
+	}
+
+	bs, ok := pubArea.([]byte)
+	if !ok {
+		return nil, ErrInvalidPubArea
+	}
+
+	public, err := tpm.UnmarshalPublic(bs)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %s", ErrInvalidPubArea, err)
+	}
+
+	return public, nil
 }
 
 // VerifyAttestationStatement verifies that an AttestationObject's attestation statement is valid according to the
@@ -116,6 +170,8 @@ func VerifyAttestationStatement(
 		return VerifyNoneAttestationStatement(attestationObject, clientDataJSONHash)
 	case AttestationFormatPacked:
 		return VerifyPackedAttestationStatement(attestationObject, clientDataJSONHash)
+	case AttestationFormatTPM:
+		return VerifyTPMAttestationStatement(attestationObject, clientDataJSONHash)
 	default:
 		return fmt.Errorf("%w: unknown format %s", ErrInvalidAttestationStatement,
 			attestationObject.Format)

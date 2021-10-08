@@ -19,8 +19,9 @@ func VerifyPackedAttestationStatement(
 		return fmt.Errorf("%w: invalid format %s", ErrInvalidAttestationStatement, attestationObject.Format)
 	}
 
-	certificate, err := attestationObject.Statement.UnmarshalCertificate()
-	if err == nil {
+	certificates, err := attestationObject.Statement.UnmarshalCertificates()
+	if err == nil && len(certificates) > 0 {
+		certificate := certificates[0]
 		// 2. If x5c is present:
 		err = verifyPackedAttestationStatementCertificate(attestationObject, clientDataJSONHash, certificate)
 	} else if errors.Is(err, ErrMissingCertificate) {
