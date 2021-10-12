@@ -2,7 +2,6 @@ package webauthn
 
 import (
 	"crypto/sha256"
-	"encoding/base64"
 	"encoding/json"
 )
 
@@ -74,11 +73,11 @@ func (response *AuthenticatorAttestationResponse) UnmarshalJSON(raw []byte) erro
 	}
 
 	*response = AuthenticatorAttestationResponse(override.Override)
-	response.ClientDataJSON, err = base64.RawURLEncoding.DecodeString(override.ClientDataJSON)
+	response.ClientDataJSON, err = fromBase64URL(override.ClientDataJSON)
 	if err != nil {
 		return err
 	}
-	response.AttestationObject, err = base64.RawURLEncoding.DecodeString(override.AttestationObject)
+	response.AttestationObject, err = fromBase64URL(override.AttestationObject)
 	if err != nil {
 		return err
 	}

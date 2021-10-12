@@ -70,8 +70,22 @@ func writeUint32(w io.Writer, v uint32) error {
 	return err
 }
 
+func fromBase64URL(encoded string) ([]byte, error) {
+	if encoded == "" {
+		return nil, nil
+	}
+	return base64.RawURLEncoding.DecodeString(encoded)
+}
+
 func toBase64URL(raw []byte) string {
 	return base64.RawURLEncoding.EncodeToString(raw)
+}
+
+func fromNullableBase64URL(encoded *string) ([]byte, error) {
+	if encoded == nil || *encoded == "" {
+		return nil, nil
+	}
+	return base64.RawURLEncoding.DecodeString(*encoded)
 }
 
 func toNullableBase64URL(raw []byte) *string {

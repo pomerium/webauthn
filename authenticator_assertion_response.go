@@ -2,7 +2,6 @@ package webauthn
 
 import (
 	"crypto/sha256"
-	"encoding/base64"
 	"encoding/json"
 )
 
@@ -68,10 +67,10 @@ func (response *AuthenticatorAssertionResponse) UnmarshalJSON(raw []byte) error 
 	type Override AuthenticatorAssertionResponse
 	var override struct {
 		Override
-		ClientDataJSON    string `json:"clientDataJSON"`
-		AuthenticatorData string `json:"authenticatorData"`
-		Signature         string `json:"signature"`
-		UserHandle        string `json:"userHandle"`
+		ClientDataJSON    string  `json:"clientDataJSON"`
+		AuthenticatorData string  `json:"authenticatorData"`
+		Signature         string  `json:"signature"`
+		UserHandle        *string `json:"userHandle"`
 	}
 	err := json.Unmarshal(raw, &override)
 	if err != nil {
@@ -79,19 +78,19 @@ func (response *AuthenticatorAssertionResponse) UnmarshalJSON(raw []byte) error 
 	}
 
 	*response = AuthenticatorAssertionResponse(override.Override)
-	response.ClientDataJSON, err = base64.RawURLEncoding.DecodeString(override.ClientDataJSON)
+	response.ClientDataJSON, err = fromBase64URL(override.ClientDataJSON)
 	if err != nil {
 		return err
 	}
-	response.AuthenticatorData, err = base64.RawURLEncoding.DecodeString(override.AuthenticatorData)
+	response.AuthenticatorData, err = fromBase64URL(override.AuthenticatorData)
 	if err != nil {
 		return err
 	}
-	response.Signature, err = base64.RawURLEncoding.DecodeString(override.Signature)
+	response.Signature, err = fromBase64URL(override.Signature)
 	if err != nil {
 		return err
 	}
-	response.UserHandle, err = base64.RawURLEncoding.DecodeString(override.UserHandle)
+	response.UserHandle, err = fromNullableBase64URL(override.UserHandle)
 	if err != nil {
 		return err
 	}

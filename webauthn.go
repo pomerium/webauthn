@@ -2,7 +2,6 @@ package webauthn
 
 import (
 	"crypto/sha256"
-	"encoding/base64"
 	"encoding/json"
 	"time"
 
@@ -97,7 +96,7 @@ func (credential *PublicKeyAssertionCredential) UnmarshalJSON(raw []byte) error 
 	}
 
 	*credential = PublicKeyAssertionCredential(override.Override)
-	credential.RawID, err = base64.RawURLEncoding.DecodeString(override.RawID)
+	credential.RawID, err = fromBase64URL(override.RawID)
 	return err
 }
 
@@ -143,7 +142,7 @@ func (credential *PublicKeyCreationCredential) UnmarshalJSON(raw []byte) error {
 	}
 
 	*credential = PublicKeyCreationCredential(override.Override)
-	credential.RawID, err = base64.RawURLEncoding.DecodeString(override.RawID)
+	credential.RawID, err = fromBase64URL(override.RawID)
 	return err
 }
 
@@ -226,7 +225,7 @@ func (creationOptions *PublicKeyCredentialCreationOptions) UnmarshalJSON(raw []b
 	}
 
 	*creationOptions = PublicKeyCredentialCreationOptions(override.Override)
-	creationOptions.Challenge, err = base64.RawURLEncoding.DecodeString(override.Challenge)
+	creationOptions.Challenge, err = fromBase64URL(override.Challenge)
 	if err != nil {
 		return err
 	}
@@ -274,7 +273,7 @@ func (descriptor *PublicKeyCredentialDescriptor) UnmarshalJSON(raw []byte) error
 	}
 
 	*descriptor = PublicKeyCredentialDescriptor(override.Override)
-	descriptor.ID, err = base64.RawURLEncoding.DecodeString(override.ID)
+	descriptor.ID, err = fromBase64URL(override.ID)
 	return err
 }
 
@@ -342,7 +341,7 @@ func (requestOptions *PublicKeyCredentialRequestOptions) UnmarshalJSON(raw []byt
 	}
 
 	*requestOptions = PublicKeyCredentialRequestOptions(override.Override)
-	requestOptions.Challenge, err = base64.RawURLEncoding.DecodeString(override.Challenge)
+	requestOptions.Challenge, err = fromBase64URL(override.Challenge)
 	if err != nil {
 		return err
 	}
@@ -387,10 +386,10 @@ func (user PublicKeyCredentialUserEntity) MarshalJSON() ([]byte, error) {
 	type Override PublicKeyCredentialUserEntity
 	return json.Marshal(struct {
 		Override
-		ID string `json:"id"`
+		ID *string `json:"id,omitempty"`
 	}{
 		Override: Override(user),
-		ID:       toBase64URL(user.ID),
+		ID:       toNullableBase64URL(user.ID),
 	})
 }
 
@@ -399,7 +398,7 @@ func (user *PublicKeyCredentialUserEntity) UnmarshalJSON(raw []byte) error {
 	type Override PublicKeyCredentialUserEntity
 	var override struct {
 		Override
-		ID string `json:"id"`
+		ID *string `json:"id,omitempty"`
 	}
 	err := json.Unmarshal(raw, &override)
 	if err != nil {
@@ -407,7 +406,7 @@ func (user *PublicKeyCredentialUserEntity) UnmarshalJSON(raw []byte) error {
 	}
 
 	*user = PublicKeyCredentialUserEntity(override.Override)
-	user.ID, err = base64.RawURLEncoding.DecodeString(override.ID)
+	user.ID, err = fromNullableBase64URL(override.ID)
 	return err
 }
 
