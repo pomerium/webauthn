@@ -2,8 +2,8 @@ package webauthn
 
 import (
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
-	"fmt"
 )
 
 // The AuthenticatorAssertionResponse represents an authenticator's response to a client’s request for generation
@@ -45,7 +45,55 @@ func (response *AuthenticatorAssertionResponse) UnmarshalClientData() (*Collecte
 	return &data, nil
 }
 
-// Verify verifies the AuthenticatorAssertionResponse.
-func (response *AuthenticatorAssertionResponse) Verify() error {
-	return fmt.Errorf("not implemented")
+// MarshalJSON marshals the AuthenticatorAssertionResponse as JSON.
+func (response AuthenticatorAssertionResponse) MarshalJSON() ([]byte, error) {
+	type Override AuthenticatorAssertionResponse
+	return json.Marshal(struct {
+		Override
+		ClientDataJSON    string  `json:"clientDataJSON"`
+		AuthenticatorData string  `json:"authenticatorData"`
+		Signature         string  `json:"signature"`
+		UserHandle        *string `json:"userHandle"`
+	}{
+		Override:          Override(response),
+		ClientDataJSON:    toBase64URL(response.ClientDataJSON),
+		AuthenticatorData: toBase64URL(response.AuthenticatorData),
+		Signature:         toBase64URL(response.Signature),
+		UserHandle:        toNullableBase64URL(response.UserHandle),
+	})
+}
+
+// UnmarshalJSON unmarshals the AuthenticatorAssertionResponse from JSON.
+func (response *AuthenticatorAssertionResponse) UnmarshalJSON(raw []byte) error {
+	type Override AuthenticatorAssertionResponse
+	var override struct {
+		Override
+		ClientDataJSON    string `json:"clientDataJSON"`
+		AuthenticatorData string `json:"authenticatorData"`
+		Signature         string `json:"signature"`
+		UserHandle        string `json:"userHandle"`
+	}
+	err := json.Unmarshal(raw, &override)
+	if err != nil {
+		return err
+	}
+
+	*response = AuthenticatorAssertionResponse(override.Override)
+	response.ClientDataJSON, err = base64.RawURLEncoding.DecodeString(override.ClientDataJSON)
+	if err != nil {
+		return err
+	}
+	response.AuthenticatorData, err = base64.RawURLEncoding.DecodeString(override.AuthenticatorData)
+	if err != nil {
+		return err
+	}
+	response.Signature, err = base64.RawURLEncoding.DecodeString(override.Signature)
+	if err != nil {
+		return err
+	}
+	response.UserHandle, err = base64.RawURLEncoding.DecodeString(override.UserHandle)
+	if err != nil {
+		return err
+	}
+	return nil
 }

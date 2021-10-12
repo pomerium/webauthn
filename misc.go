@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto"
 	"crypto/subtle"
+	"encoding/base64"
 	"encoding/binary"
 	"io"
 
@@ -67,4 +68,16 @@ func writeUint32(w io.Writer, v uint32) error {
 	binary.BigEndian.PutUint32(buf[:], v)
 	_, err := w.Write(buf[:])
 	return err
+}
+
+func toBase64URL(raw []byte) string {
+	return base64.RawURLEncoding.EncodeToString(raw)
+}
+
+func toNullableBase64URL(raw []byte) *string {
+	if len(raw) == 0 {
+		return nil
+	}
+	encoded := base64.RawURLEncoding.EncodeToString(raw)
+	return &encoded
 }

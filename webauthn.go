@@ -32,27 +32,6 @@ type AuthenticatorSelectionCriteria struct {
 	UserVerification string `json:"userVerification"`
 }
 
-// A Base64RawURLBytes is a slice of bytes. The JSON format of these bytes will be base64-raw-url encoded.
-type Base64RawURLBytes []byte
-
-// MarshalJSON marshals the Base64RawURLBytes as JSON.
-func (bs Base64RawURLBytes) MarshalJSON() ([]byte, error) {
-	str := base64.RawURLEncoding.EncodeToString(bs)
-	return json.Marshal(str)
-}
-
-// UnmarshalJSON unmarshals the Base64RawURLBytes from JSON.
-func (bs *Base64RawURLBytes) UnmarshalJSON(raw []byte) error {
-	var str string
-	err := json.Unmarshal(raw, &str)
-	if err != nil {
-		return err
-	}
-
-	*bs, err = base64.RawURLEncoding.DecodeString(str)
-	return err
-}
-
 // CollectedClientData represents the contextual bindings of both the WebAuthn Relying Party and the client.
 type CollectedClientData struct {
 	// Type contains the string "webauthn.create" when creating new credentials, and "webauthn.get" when
@@ -84,13 +63,42 @@ type PublicKeyAssertionCredential struct {
 	// RawID is the credential ID, chosen by the authenticator. The credential ID is used to look up credentials for
 	// use, and is therefore expected to be globally unique with high probability across all credentials of the same
 	// type, across all authenticators.
-	RawID Base64RawURLBytes `json:"rawId"`
+	RawID []byte `json:"rawId"`
 	// Response contains the authenticator's response to the client's request to generate an authentication
 	// assertion.
 	Response AuthenticatorAssertionResponse `json:"response"`
 	// ClientExtensionResults is a map containing extension identifier → client extension output entries produced by
 	// the extension’s client extension processing.
-	ClientExtensionResults map[string]interface{} `json:"clientExtensionResults"`
+	ClientExtensionResults map[string]interface{} `json:"clientExtensionResults,omitempty"`
+}
+
+// MarshalJSON marshals the PublicKeyAssertionCredential as JSON.
+func (credential PublicKeyAssertionCredential) MarshalJSON() ([]byte, error) {
+	type Override PublicKeyAssertionCredential
+	return json.Marshal(struct {
+		Override
+		RawID string `json:"rawId"`
+	}{
+		Override: Override(credential),
+		RawID:    toBase64URL(credential.RawID),
+	})
+}
+
+// UnmarshalJSON unmarshals the PublicKeyAssertionCredential from JSON.
+func (credential *PublicKeyAssertionCredential) UnmarshalJSON(raw []byte) error {
+	type Override PublicKeyAssertionCredential
+	var override struct {
+		Override
+		RawID string `json:"rawId"`
+	}
+	err := json.Unmarshal(raw, &override)
+	if err != nil {
+		return err
+	}
+
+	*credential = PublicKeyAssertionCredential(override.Override)
+	credential.RawID, err = base64.RawURLEncoding.DecodeString(override.RawID)
+	return err
 }
 
 // PublicKeyCreationCredential contains the attributes when a new credential is created.
@@ -102,12 +110,41 @@ type PublicKeyCreationCredential struct {
 	// RawID is the credential ID, chosen by the authenticator. The credential ID is used to look up credentials for
 	// use, and is therefore expected to be globally unique with high probability across all credentials of the same
 	// type, across all authenticators.
-	RawID Base64RawURLBytes `json:"rawId"`
+	RawID []byte `json:"rawId"`
 	// Response contains the authenticator's response to the client's request to create a public key credential.
 	Response AuthenticatorAttestationResponse `json:"response"`
 	// ClientExtensionResults is a map containing extension identifier → client extension output entries produced by
 	// the extension’s client extension processing.
-	ClientExtensionResults map[string]interface{} `json:"clientExtensionResults"`
+	ClientExtensionResults map[string]interface{} `json:"clientExtensionResults,omitempty"`
+}
+
+// MarshalJSON marshals the PublicKeyCreationCredential as JSON.
+func (credential PublicKeyCreationCredential) MarshalJSON() ([]byte, error) {
+	type Override PublicKeyCreationCredential
+	return json.Marshal(struct {
+		Override
+		RawID string `json:"rawId"`
+	}{
+		Override: Override(credential),
+		RawID:    toBase64URL(credential.RawID),
+	})
+}
+
+// UnmarshalJSON unmarshals the PublicKeyCreationCredential as JSON.
+func (credential *PublicKeyCreationCredential) UnmarshalJSON(raw []byte) error {
+	type Override PublicKeyCreationCredential
+	var override struct {
+		Override
+		RawID string `json:"rawId"`
+	}
+	err := json.Unmarshal(raw, &override)
+	if err != nil {
+		return err
+	}
+
+	*credential = PublicKeyCreationCredential(override.Override)
+	credential.RawID, err = base64.RawURLEncoding.DecodeString(override.RawID)
+	return err
 }
 
 // The PublicKeyCredentialCreationOptions supplies create() with the data it needs to generate a new credential.
@@ -125,7 +162,7 @@ type PublicKeyCredentialCreationOptions struct {
 	User PublicKeyCredentialUserEntity `json:"user"`
 	// This member contains a challenge intended to be used for generating the newly created credential’s
 	// attestation object.
-	Challenge Base64RawURLBytes `json:"challenge"`
+	Challenge []byte `json:"challenge"`
 	// This member contains information about the desired properties of the credential to be created. The sequence
 	// is ordered from most preferred to least preferred. The client makes a best-effort to create the most
 	// preferred credential that it can.
@@ -140,15 +177,15 @@ type PublicKeyCredentialCreationOptions struct {
 	ExcludeCredentials []PublicKeyCredentialDescriptor `json:"excludeCredentials,omitempty"`
 	// This member is intended for use by Relying Parties that wish to select the appropriate authenticators to
 	// participate in the create() operation.
-	AuthenticatorSelection AuthenticatorSelectionCriteria `json:"authenticatorSelection"`
+	AuthenticatorSelection *AuthenticatorSelectionCriteria `json:"authenticatorSelection,omitempty"`
 	// This member is intended for use by Relying Parties that wish to express their preference for attestation
 	// conveyance. Its values SHOULD be members of AttestationConveyancePreference. Client platforms MUST ignore
 	// unknown values, treating an unknown value as if the member does not exist. Its default value is "none".
-	Attestation string `json:"attestation"`
+	Attestation string `json:"attestation,omitempty"`
 	// This member contains additional parameters requesting additional processing by the client and authenticator.
 	// For example, the caller may request that only authenticators with certain capabilities be used to create the
 	// credential, or that particular information be returned in the attestation object.
-	Extensions map[string]interface{} `json:"extensions"`
+	Extensions map[string]interface{} `json:"extensions,omitempty"`
 }
 
 // AllowsAlgorithm returns true if the creation options allow the given algorithm.
@@ -161,6 +198,42 @@ func (creationOptions *PublicKeyCredentialCreationOptions) AllowsAlgorithm(algor
 	return false
 }
 
+// MarshalJSON marshals the PublicKeyCredentialCreationOptions as JSON.
+func (creationOptions PublicKeyCredentialCreationOptions) MarshalJSON() ([]byte, error) {
+	type Override PublicKeyCredentialCreationOptions
+	return json.Marshal(struct {
+		Override
+		Challenge string `json:"challenge"`
+		Timeout   int64  `json:"timeout"`
+	}{
+		Override:  Override(creationOptions),
+		Challenge: toBase64URL(creationOptions.Challenge),
+		Timeout:   creationOptions.Timeout.Milliseconds(),
+	})
+}
+
+// UnmarshalJSON unmarshals the PublicKeyCredentialCreationOptions as JSON.
+func (creationOptions *PublicKeyCredentialCreationOptions) UnmarshalJSON(raw []byte) error {
+	type Override PublicKeyCredentialCreationOptions
+	var override struct {
+		Override
+		Challenge string `json:"challenge"`
+		Timeout   int64  `json:"timeout"`
+	}
+	err := json.Unmarshal(raw, &override)
+	if err != nil {
+		return err
+	}
+
+	*creationOptions = PublicKeyCredentialCreationOptions(override.Override)
+	creationOptions.Challenge, err = base64.RawURLEncoding.DecodeString(override.Challenge)
+	if err != nil {
+		return err
+	}
+	creationOptions.Timeout = time.Duration(override.Timeout) * time.Millisecond
+	return nil
+}
+
 // The PublicKeyCredentialDescriptor contains the attributes that are specified by a caller when referring to a
 // public key credential as an input parameter to the create() or get() methods.
 type PublicKeyCredentialDescriptor struct {
@@ -169,11 +242,40 @@ type PublicKeyCredentialDescriptor struct {
 	// unknown type.
 	Type string `json:"type"`
 	// This member contains the credential ID of the public key credential the caller is referring to.
-	ID Base64RawURLBytes `json:"id"`
+	ID []byte `json:"id"`
 	// This OPTIONAL member contains a hint as to how the client might communicate with the managing authenticator
 	// of the public key credential the caller is referring to. The values SHOULD be members of
 	// AuthenticatorTransport but client platforms MUST ignore unknown values.
 	Transports []string `json:"transports"`
+}
+
+// MarshalJSON marshals the PublicKeyCredentialDescriptor as JSON.
+func (descriptor PublicKeyCredentialDescriptor) MarshalJSON() ([]byte, error) {
+	type Override PublicKeyCredentialDescriptor
+	return json.Marshal(struct {
+		Override
+		ID string `json:"id"`
+	}{
+		Override: Override(descriptor),
+		ID:       toBase64URL(descriptor.ID),
+	})
+}
+
+// UnmarshalJSON unmarshals the PublicKeyCredentialDescriptor as JSON.
+func (descriptor *PublicKeyCredentialDescriptor) UnmarshalJSON(raw []byte) error {
+	type Override PublicKeyCredentialDescriptor
+	var override struct {
+		Override
+		ID string `json:"id"`
+	}
+	err := json.Unmarshal(raw, &override)
+	if err != nil {
+		return err
+	}
+
+	*descriptor = PublicKeyCredentialDescriptor(override.Override)
+	descriptor.ID, err = base64.RawURLEncoding.DecodeString(override.ID)
+	return err
 }
 
 // PublicKeyCredentialParameters is used to supply additional parameters when creating a new credential.
@@ -190,7 +292,7 @@ type PublicKeyCredentialParameters struct {
 type PublicKeyCredentialRequestOptions struct {
 	// This member represents a challenge that the selected authenticator signs, along with other data, when
 	// producing an authentication assertion.
-	Challenge Base64RawURLBytes `json:"challenge"`
+	Challenge []byte `json:"challenge"`
 	// This OPTIONAL member specifies a time, in milliseconds, that the caller is willing to wait for the call to
 	// complete. The value is treated as a hint, and MAY be overridden by the client.
 	Timeout time.Duration `json:"timeout,omitempty"`
@@ -210,6 +312,42 @@ type PublicKeyCredentialRequestOptions struct {
 	// authenticator. For example, if transaction confirmation is sought from the user, then the prompt string
 	// might be included as an extension.
 	Extensions map[string]interface{} `json:"extensions,omitempty"`
+}
+
+// MarshalJSON marshals the PublicKeyCredentialRequestOptions as JSON.
+func (requestOptions PublicKeyCredentialRequestOptions) MarshalJSON() ([]byte, error) {
+	type Override PublicKeyCredentialRequestOptions
+	return json.Marshal(struct {
+		Override
+		Challenge string `json:"challenge"`
+		Timeout   int64  `json:"timeout"`
+	}{
+		Override:  Override(requestOptions),
+		Challenge: toBase64URL(requestOptions.Challenge),
+		Timeout:   requestOptions.Timeout.Milliseconds(),
+	})
+}
+
+// UnmarshalJSON unmarshals the PublicKeyCredentialRequestOptions as JSON.
+func (requestOptions *PublicKeyCredentialRequestOptions) UnmarshalJSON(raw []byte) error {
+	type Override PublicKeyCredentialRequestOptions
+	var override struct {
+		Override
+		Challenge string `json:"challenge"`
+		Timeout   int64  `json:"timeout"`
+	}
+	err := json.Unmarshal(raw, &override)
+	if err != nil {
+		return err
+	}
+
+	*requestOptions = PublicKeyCredentialRequestOptions(override.Override)
+	requestOptions.Challenge, err = base64.RawURLEncoding.DecodeString(override.Challenge)
+	if err != nil {
+		return err
+	}
+	requestOptions.Timeout = time.Duration(override.Timeout) * time.Millisecond
+	return nil
 }
 
 // The PublicKeyCredentialRpEntity is used to supply additional Relying Party attributes when creating a new
@@ -232,7 +370,7 @@ type PublicKeyCredentialUserEntity struct {
 	//
 	// The user handle MUST NOT contain personally identifying information about the user, such as a username or
 	// e-mail address.
-	ID Base64RawURLBytes `json:"id"`
+	ID []byte `json:"id"`
 	// A human-palatable name for the user account, intended only for display. For example, "Alex Müller" or
 	// "田中倫". The Relying Party SHOULD let the user choose this, and SHOULD NOT restrict the choice more than
 	// necessary.
@@ -242,6 +380,35 @@ type PublicKeyCredentialUserEntity struct {
 	DisplayName string `json:"displayName"`
 	// A human-palatable identifier for a user account.
 	Name string `json:"name"`
+}
+
+// MarshalJSON marshals the PublicKeyCredentialUserEntity as JSON.
+func (user PublicKeyCredentialUserEntity) MarshalJSON() ([]byte, error) {
+	type Override PublicKeyCredentialUserEntity
+	return json.Marshal(struct {
+		Override
+		ID string `json:"id"`
+	}{
+		Override: Override(user),
+		ID:       toBase64URL(user.ID),
+	})
+}
+
+// UnmarshalJSON unmarshals the PublicKeyCredentialUserEntity from JSON.
+func (user *PublicKeyCredentialUserEntity) UnmarshalJSON(raw []byte) error {
+	type Override PublicKeyCredentialUserEntity
+	var override struct {
+		Override
+		ID string `json:"id"`
+	}
+	err := json.Unmarshal(raw, &override)
+	if err != nil {
+		return err
+	}
+
+	*user = PublicKeyCredentialUserEntity(override.Override)
+	user.ID, err = base64.RawURLEncoding.DecodeString(override.ID)
+	return err
 }
 
 // A TokenBinding is established by a User Agent generating a private-public key pair (possibly within a secure
