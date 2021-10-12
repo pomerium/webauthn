@@ -154,7 +154,7 @@ type PublicKeyCredentialCreationOptions struct {
 	//
 	// Its value’s id member specifies the RP ID the credential should be scoped to. If omitted, its value will be
 	// the CredentialsContainer object’s relevant settings object's origin's effective domain.
-	RP PublicKeyCredentialRpEntity `json:"rp"`
+	RP PublicKeyCredentialRPEntity `json:"rp"`
 	// This member contains data about the user account for which the Relying Party is requesting attestation.
 	//
 	// Its value’s name, displayName and id members are REQUIRED.
@@ -349,11 +349,11 @@ func (requestOptions *PublicKeyCredentialRequestOptions) UnmarshalJSON(raw []byt
 	return nil
 }
 
-// The PublicKeyCredentialRpEntity is used to supply additional Relying Party attributes when creating a new
+// The PublicKeyCredentialRPEntity is used to supply additional Relying Party attributes when creating a new
 // credential.
-type PublicKeyCredentialRpEntity struct {
+type PublicKeyCredentialRPEntity struct {
 	// A unique identifier for the Relying Party entity, which sets the RP ID.
-	ID string `json:"id"`
+	ID string `json:"id,omitempty"`
 	// A human-palatable identifier for the Relying Party, intended only for display.
 	Name string `json:"name"`
 }
