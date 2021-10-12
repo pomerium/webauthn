@@ -14,13 +14,13 @@ type AuthenticatorSelectionCriteria struct {
 	// AuthenticatorAttachment, if present, filters eligible authenticators. The value SHOULD be a member of
 	// AuthenticatorAttachment but client platforms MUST ignore unknown values, treating an unknown value as if the
 	// member does not exist.
-	AuthenticatorAttachment string `json:"authenticatorAttachment"`
+	AuthenticatorAttachment string `json:"authenticatorAttachment,omitempty"`
 	// ResidentKey specifies the extent to which the Relying Party desires to create a client-side discoverable
 	// credential. For historical reasons the naming retains the deprecated “resident” terminology. The value
 	// SHOULD be a member of ResidentKeyRequirement but client platforms MUST ignore unknown values, treating an
 	// unknown value as if the member does not exist. If no value is given then the effective value is required if
 	// requireResidentKey is true or discouraged if it is false or absent.
-	ResidentKey string `json:"residentKey"`
+	ResidentKey string `json:"residentKey,omitempty"`
 	// RequireResidentKey is retained for backwards compatibility with WebAuthn Level 1 and, for historical reasons,
 	// its naming retains the deprecated “resident” terminology for discoverable credentials. Relying Parties SHOULD
 	// set it to true if, and only if, residentKey is set to required.
@@ -29,7 +29,7 @@ type AuthenticatorSelectionCriteria struct {
 	// operation. Eligible authenticators are filtered to only those capable of satisfying this requirement. The
 	// value SHOULD be a member of UserVerificationRequirement but client platforms MUST ignore unknown values,
 	// treating an unknown value as if the member does not exist.
-	UserVerification string `json:"userVerification"`
+	UserVerification string `json:"userVerification,omitempty"`
 }
 
 // CollectedClientData represents the contextual bindings of both the WebAuthn Relying Party and the client.
