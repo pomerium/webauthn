@@ -43,7 +43,7 @@ func TestUnmarshalAttestationObject(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Empty(t, remaining)
 		assert.NotEmpty(t, attestationObject.AuthData)
-		assert.Equal(t, "android-key", attestationObject.Format)
+		assert.Equal(t, AttestationFormatAndroidKey, attestationObject.Format)
 		assert.Equal(t, []string{"alg", "sig", "x5c"}, mapKeys(attestationObject.Statement))
 	})
 	t.Run("apple", func(t *testing.T) {
@@ -52,7 +52,7 @@ func TestUnmarshalAttestationObject(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Empty(t, remaining)
 		assert.NotEmpty(t, attestationObject.AuthData)
-		assert.Equal(t, "apple", attestationObject.Format)
+		assert.Equal(t, AttestationFormatApple, attestationObject.Format)
 		assert.Equal(t, []string{"alg", "x5c"}, mapKeys(attestationObject.Statement))
 	})
 	t.Run("at key", func(t *testing.T) {
@@ -61,7 +61,7 @@ func TestUnmarshalAttestationObject(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Empty(t, remaining)
 		assert.NotEmpty(t, attestationObject.AuthData)
-		assert.Equal(t, "packed", attestationObject.Format)
+		assert.Equal(t, AttestationFormatPacked, attestationObject.Format)
 		assert.Equal(t, []string{"alg", "sig", "x5c"}, mapKeys(attestationObject.Statement))
 	})
 	t.Run("none", func(t *testing.T) {
@@ -70,7 +70,7 @@ func TestUnmarshalAttestationObject(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Empty(t, remaining)
 		assert.NotEmpty(t, attestationObject.AuthData)
-		assert.Equal(t, "none", attestationObject.Format)
+		assert.Equal(t, AttestationFormatNone, attestationObject.Format)
 		assert.Equal(t, []string(nil), mapKeys(attestationObject.Statement))
 	})
 	t.Run("packed", func(t *testing.T) {
@@ -79,7 +79,7 @@ func TestUnmarshalAttestationObject(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Empty(t, remaining)
 		assert.NotEmpty(t, attestationObject.AuthData)
-		assert.Equal(t, "packed", attestationObject.Format)
+		assert.Equal(t, AttestationFormatPacked, attestationObject.Format)
 		assert.Equal(t, []string{"alg", "sig", "x5c"}, mapKeys(attestationObject.Statement))
 	})
 	t.Run("packed 512", func(t *testing.T) {
@@ -88,7 +88,7 @@ func TestUnmarshalAttestationObject(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Empty(t, remaining)
 		assert.NotEmpty(t, attestationObject.AuthData)
-		assert.Equal(t, "packed", attestationObject.Format)
+		assert.Equal(t, AttestationFormatPacked, attestationObject.Format)
 		assert.Equal(t, []string{"alg", "sig"}, mapKeys(attestationObject.Statement))
 	})
 	t.Run("tpm sha1", func(t *testing.T) {
@@ -97,7 +97,7 @@ func TestUnmarshalAttestationObject(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Empty(t, remaining)
 		assert.NotEmpty(t, attestationObject.AuthData)
-		assert.Equal(t, "tpm", attestationObject.Format)
+		assert.Equal(t, AttestationFormatTPM, attestationObject.Format)
 		assert.Equal(t, []string{"alg", "certInfo", "pubArea", "sig", "ver", "x5c"}, mapKeys(attestationObject.Statement))
 
 	})
@@ -107,7 +107,7 @@ func TestUnmarshalAttestationObject(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Empty(t, remaining)
 		assert.NotEmpty(t, attestationObject.AuthData)
-		assert.Equal(t, "tpm", attestationObject.Format)
+		assert.Equal(t, AttestationFormatTPM, attestationObject.Format)
 		assert.Equal(t, []string{"alg", "certInfo", "pubArea", "sig", "ver", "x5c"}, mapKeys(attestationObject.Statement))
 	})
 	t.Run("trust key t110", func(t *testing.T) {
@@ -116,7 +116,7 @@ func TestUnmarshalAttestationObject(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Empty(t, remaining)
 		assert.NotEmpty(t, attestationObject.AuthData)
-		assert.Equal(t, "packed", attestationObject.Format)
+		assert.Equal(t, AttestationFormatPacked, attestationObject.Format)
 		assert.Equal(t, []string{"alg", "sig", "x5c"}, mapKeys(attestationObject.Statement))
 	})
 	t.Run("u2f", func(t *testing.T) {
@@ -125,7 +125,7 @@ func TestUnmarshalAttestationObject(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Empty(t, remaining)
 		assert.NotEmpty(t, attestationObject.AuthData)
-		assert.Equal(t, "fido-u2f", attestationObject.Format)
+		assert.Equal(t, AttestationFormatFIDOU2F, attestationObject.Format)
 		assert.Equal(t, []string{"sig", "x5c"}, mapKeys(attestationObject.Statement))
 	})
 }

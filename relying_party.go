@@ -9,8 +9,13 @@ import (
 	"github.com/pomerium/webauthn/cose"
 )
 
-// ErrCredentialNotFound is the error used to indicate a credential wasn't found.
-var ErrCredentialNotFound = errors.New("credential not found")
+var (
+
+	// ErrCredentialNotFound is the error used to indicate a credential wasn't found.
+	ErrCredentialNotFound = errors.New("credential not found")
+	// ErrCredentialRegisteredToDifferentUser is the error used to indicate a credential is being used by another user.
+	ErrCredentialRegisteredToDifferentUser = errors.New("credential registered to another user")
+)
 
 // A Credential is the public key and user id stored by the relying party to identify
 // a private key bound to an authenticator.
@@ -32,9 +37,18 @@ type CredentialStorage interface {
 // A RelyingParty is the entity that utilizes the Web Authentication API to register and
 // authenticate users.
 type RelyingParty struct {
-	credentialStorage CredentialStorage
-	id                []byte
 	origin            string
+	id                []byte
+	credentialStorage CredentialStorage
+}
+
+// NewRelyingParty creates a new RelyingParty.
+func NewRelyingParty(origin string, credentialStorage CredentialStorage) *RelyingParty {
+	return &RelyingParty{
+		origin:            origin,
+		id:                []byte(origin),
+		credentialStorage: credentialStorage,
+	}
 }
 
 // VerifyAuthenticationCeremony verifies an authentication ceremony by performing steps
@@ -42,6 +56,7 @@ type RelyingParty struct {
 func (rp *RelyingParty) VerifyAuthenticationCeremony(
 	options *PublicKeyCredentialRequestOptions,
 	credential *PublicKeyAssertionCredential,
+
 ) (*Credential, error) {
 	//  4. Let clientExtensionResults be the result of calling credential.getClientExtensionResults().
 
@@ -170,8 +185,174 @@ func (rp *RelyingParty) VerifyAuthenticationCeremony(
 // VerifyRegistrationCeremony verifies a registration ceremony by performing steps
 // 4-24 of https://www.w3.org/TR/webauthn-2/#sctn-registering-a-new-credential.
 func (rp *RelyingParty) VerifyRegistrationCeremony(
-	options *PublicKeyCredentialCreationOptions,
+	creationOptions *PublicKeyCredentialCreationOptions,
 	credential *PublicKeyCreationCredential,
+	verifyOptions ...VerifyOption,
 ) (*Credential, error) {
-	panic("not implemented")
+	cfg, err := getVerifyConfig(verifyOptions...)
+	if err != nil {
+		return nil, err
+	}
+
+	//  4. Let clientExtensionResults be the result of calling credential.getClientExtensionResults().
+	//  5. Let JSONtext be the result of running UTF-8 decode on the value of response.clientDataJSON.
+	//  6. Let C, the client data claimed as collected during the credential creation, be the result of running an
+	//     implementation-specific JSON parser on JSONtext.
+	clientData, err := credential.Response.UnmarshalClientData()
+	if err != nil {
+		return nil, fmt.Errorf("invalid client data: %w", err)
+	}
+
+	//  7. Verify that the value of C.type is webauthn.create.
+	if clientData.Type != "webauthn.create" {
+		return nil, fmt.Errorf("invalid client data type")
+	}
+
+	//  8. Verify that the value of C.challenge equals the base64url encoding of options.challenge.
+	expectedChallenge := base64.RawURLEncoding.EncodeToString(creationOptions.Challenge)
+	if !stringsAreEqual(expectedChallenge, clientData.Challenge) {
+		return nil, fmt.Errorf("invalid client data challenge")
+	}
+
+	//  9. Verify that the value of C.origin matches the Relying Party's origin.
+	if !stringsAreEqual(creationOptions.RP.ID, clientData.Origin) {
+		return nil, fmt.Errorf("invalid client data origin")
+	}
+
+	// 10. Verify that the value of C.tokenBinding.status matches the state of Token Binding for the TLS connection
+	//     over which the assertion was obtained. If Token Binding was used on that TLS connection, also verify that
+	//     C.tokenBinding.id matches the base64url encoding of the Token Binding ID for the connection.
+	//     - not implemented
+
+	// 11. Let hash be the result of computing a hash over response.clientDataJSON using SHA-256.
+	clientDataJSONHash := credential.Response.GetClientDataJSONHash()
+
+	// 12. Perform CBOR decoding on the attestationObject field of the AuthenticatorAttestationResponse structure to
+	//     obtain the attestation statement format fmt, the authenticator data authData, and the attestation statement
+	//     attStmt.
+	attestationObject, err := credential.Response.UnmarshalAttestationObject()
+	if err != nil {
+		return nil, fmt.Errorf("invalid attestation object: %w", err)
+	}
+
+	authenticatorData, err := attestationObject.UnmarshalAuthenticatorData()
+	if err != nil {
+		return nil, fmt.Errorf("invalid authenticator data: %w", err)
+	}
+
+	// 13. Verify that the rpIdHash in authData is the SHA-256 hash of the RP ID expected by the Relying Party.
+	expectedRPIDHash := sha256.Sum256([]byte(creationOptions.RP.ID))
+	if !bytesAreEqual(expectedRPIDHash[:], authenticatorData.RPIDHash[:]) {
+		return nil, fmt.Errorf("invalid RP ID Hash")
+	}
+
+	// 14. Verify that the User Present bit of the flags in authData is set.
+	if !authenticatorData.Flags.UserPresent() {
+		return nil, fmt.Errorf("user not present in authenticator data")
+	}
+
+	// 15. If user verification is required for this registration, verify that the User Verified bit of the flags in
+	//     authData is set.
+	if creationOptions.AuthenticatorSelection.UserVerification == UserVerificationRequired &&
+		!authenticatorData.Flags.UserVerified() {
+		return nil, fmt.Errorf("user not verified in authenticator data")
+	}
+
+	// 16. Verify that the "alg" parameter in the credential public key in authData matches the alg attribute of one of
+	//     the items in options.pubKeyCredParams.
+	key, _, err := cose.UnmarshalPublicKey(authenticatorData.AttestedCredentialData.CredentialPublicKey)
+	if err != nil {
+		return nil, fmt.Errorf("invalid public key: %w", err)
+	}
+	if !creationOptions.AllowsAlgorithm(key.Algorithm()) {
+		return nil, fmt.Errorf("invalid algorithm")
+	}
+
+	// 17. Verify that the values of the client extension outputs in clientExtensionResults and the authenticator
+	//     extension outputs in the extensions in authData are as expected, considering the client extension input
+	//     values that were given in options.extensions and any specific policy of the Relying Party regarding
+	//     unsolicited extensions, i.e., those that were not specified as part of options.extensions. In the general
+	//     case, the meaning of "are as expected" is specific to the Relying Party and which extensions are in use.
+	//     - not implemented
+
+	// 18. Determine the attestation statement format by performing a USASCII case-sensitive match on fmt against the
+	//     set of supported WebAuthn Attestation Statement Format Identifier values. An up-to-date list of registered
+	//     WebAuthn Attestation Statement Format Identifier values is maintained in the IANA "WebAuthn Attestation
+	//     Statement Format Identifiers" registry [IANA-WebAuthn-Registries] established by [RFC8809].
+	// 19. Verify that attStmt is a correct attestation statement, conveying a valid attestation signature, by using
+	//     the attestation statement format fmt’s verification procedure given attStmt, authData and hash.
+	result, err := VerifyAttestationStatement(attestationObject, clientDataJSONHash)
+	if err != nil {
+		return nil, fmt.Errorf("invalid attestation statement format: %w", err)
+	}
+
+	// 20. If validation is successful, obtain a list of acceptable trust anchors (i.e. attestation root certificates)
+	//     for that attestation type and attestation statement format fmt, from a trusted source or from policy. For
+	//     example, the FIDO Metadata Service [FIDOMetadataService] provides one way to obtain such information, using
+	//     the aaguid in the attestedCredentialData in authData.
+	// 21. Assess the attestation trustworthiness using the outputs of the verification procedure in step 19, as
+	//     follows:
+	//     - If no attestation was provided, verify that None attestation is acceptable under Relying Party policy.
+	//     - If self attestation was used, verify that self attestation is acceptable under Relying Party policy.
+	//     - Otherwise, use the X.509 certificates returned as the attestation trust path from the verification
+	//       procedure to verify that the attestation public key either correctly chains up to an acceptable root
+	//       certificate, or is itself an acceptable certificate (i.e., it and the root certificate obtained in Step
+	//       20 may be the same).
+
+	if _, allowed := cfg.allowedTypes[result.Type]; !allowed {
+		return nil, fmt.Errorf("type not allowed: %s", result.Type)
+	}
+	if _, allowed := cfg.allowedFormats[attestationObject.Format]; !allowed {
+		return nil, fmt.Errorf("format not allowed: %s", attestationObject.Format)
+	}
+
+	switch attestationObject.Format {
+	case AttestationFormatApple:
+	case AttestationFormatAndroidSafetyNet:
+	case AttestationFormatFIDOU2F:
+		// Theoretically we should be able to verify the device using the FIDO Metadata service. However, in reality the
+		// service is neither complete nor does it provide accurate information, so for now we will always trust
+		// FIDO-U2F keys.
+	default:
+	}
+
+	// 22. Check that the credentialId is not yet registered to any other user. If registration is requested for a
+	//     credential that is already registered to a different user, the Relying Party SHOULD fail this registration
+	//     ceremony, or it MAY decide to accept the registration, e.g. while deleting the older registration.
+	existingCredential, err := rp.credentialStorage.GetCredential(credential.RawID)
+	switch {
+	case errors.Is(err, ErrCredentialNotFound):
+	case err != nil:
+		return nil, fmt.Errorf("error retrieving credential: %w", err)
+	case !bytesAreEqual(existingCredential.OwnerID, creationOptions.User.ID):
+		return nil, ErrCredentialRegisteredToDifferentUser
+	}
+
+	// 23. If the attestation statement attStmt verified successfully and is found to be trustworthy, then register the
+	//     new credential with the account that was denoted in options.user:
+	//     - Associate the user’s account with the credentialId and credentialPublicKey in
+	//       authData.attestedCredentialData, as appropriate for the Relying Party's system.
+	//     - Associate the credentialId with a new stored signature counter value initialized to the value of
+	//       authData.signCount.
+	serverCredential := &Credential{
+		ID:        credential.RawID,
+		OwnerID:   creationOptions.User.ID,
+		PublicKey: authenticatorData.AttestedCredentialData.CredentialPublicKey,
+	}
+	err = rp.credentialStorage.SetCredential(serverCredential)
+	if err != nil {
+		return nil, fmt.Errorf("error saving credential: %w", err)
+	}
+
+	//     It is RECOMMENDED to also:
+	//     - Associate the credentialId with the transport hints returned by calling
+	//       credential.response.getTransports(). This value SHOULD NOT be modified before or after storing it. It is
+	//       RECOMMENDED to use this value to populate the transports of the allowCredentials option in future get()
+	//       calls to help the client know how to find a suitable authenticator.
+	//       - not implemented
+	//     - If the attestation statement attStmt successfully verified but is not trustworthy per step 21 above, the
+	//       Relying Party SHOULD fail the registration ceremony.
+	//       - implemented in step 21
+
+	return serverCredential, nil
 }

@@ -31,13 +31,13 @@ type AttestationFormat string
 
 // Attestation formats from https://www.w3.org/TR/webauthn-2/#sctn-defined-attestation-formats
 const (
-	AttestationFormatAndroidKey       = "android-key"
-	AttestationFormatAndroidSafetyNet = "android-safetynet"
-	AttestationFormatApple            = "apple"
-	AttestationFormatFIDOU2F          = "fido-u2f"
-	AttestationFormatNone             = "none"
-	AttestationFormatPacked           = "packed"
-	AttestationFormatTPM              = "tpm"
+	AttestationFormatAndroidKey       AttestationFormat = "android-key"
+	AttestationFormatAndroidSafetyNet AttestationFormat = "android-safetynet"
+	AttestationFormatApple            AttestationFormat = "apple"
+	AttestationFormatFIDOU2F          AttestationFormat = "fido-u2f"
+	AttestationFormatNone             AttestationFormat = "none"
+	AttestationFormatPacked           AttestationFormat = "packed"
+	AttestationFormatTPM              AttestationFormat = "tpm"
 )
 
 // AllAttestationFormats are all the attestation formats.
