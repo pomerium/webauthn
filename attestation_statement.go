@@ -90,6 +90,7 @@ var AllAttestationTypes = []AttestationType{
 	AttestationTypeAttestationCA,
 	AttestationTypeAnonymizationCA,
 	AttestationTypeNone,
+	AttestationTypeUnknown,
 }
 
 // AttestationStatement is a map of data stored in an AttestationObject according to one of the pre-defined attestation

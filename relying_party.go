@@ -248,7 +248,7 @@ func (rp *RelyingParty) VerifyRegistrationCeremony(
 	}
 
 	//  9. Verify that the value of C.origin matches the Relying Party's origin.
-	if !stringsAreEqual(creationOptions.RP.ID, clientData.Origin) {
+	if !stringsAreEqual(rp.origin, clientData.Origin) {
 		return nil, fmt.Errorf("invalid client data origin")
 	}
 
@@ -274,7 +274,7 @@ func (rp *RelyingParty) VerifyRegistrationCeremony(
 	}
 
 	// 13. Verify that the rpIdHash in authData is the SHA-256 hash of the RP ID expected by the Relying Party.
-	expectedRPIDHash := sha256.Sum256([]byte(creationOptions.RP.ID))
+	expectedRPIDHash := sha256.Sum256(rp.id)
 	if !bytesAreEqual(expectedRPIDHash[:], authenticatorData.RPIDHash[:]) {
 		return nil, fmt.Errorf("invalid RP ID Hash")
 	}

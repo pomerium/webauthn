@@ -39,6 +39,34 @@ func TestRelyingParty_VerifyAuthenticationCeremony(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func TestRelyingParty_VerifyRegistrationCeremony(t *testing.T) {
+	options := readPublicKeyCredentialCreationOptions(t, "GoogleTitan")
+	credential := readPublicKeyCreationCredential(t, "GoogleTitan")
+
+	storage := NewInMemoryCredentialStorage()
+	rp := NewRelyingParty("http://localhost:5000", storage)
+	_, err := rp.VerifyRegistrationCeremony(options, credential)
+	assert.NoError(t, err)
+}
+
+func readPublicKeyCredentialCreationOptions(t *testing.T, name string) *PublicKeyCredentialCreationOptions {
+	raw, err := os.ReadFile("testdata/attestation" + name + "Options.json")
+	require.NoError(t, err)
+	var options PublicKeyCredentialCreationOptions
+	err = json.Unmarshal(raw, &options)
+	require.NoError(t, err)
+	return &options
+}
+
+func readPublicKeyCreationCredential(t *testing.T, name string) *PublicKeyCreationCredential {
+	raw, err := os.ReadFile("testdata/attestation" + name + "Response.json")
+	require.NoError(t, err)
+	var options PublicKeyCreationCredential
+	err = json.Unmarshal(raw, &options)
+	require.NoError(t, err)
+	return &options
+}
+
 func readPublicKeyCredentialRequestOptions(t *testing.T, name string) *PublicKeyCredentialRequestOptions {
 	raw, err := os.ReadFile("testdata/assertion" + name + "Options.json")
 	require.NoError(t, err)

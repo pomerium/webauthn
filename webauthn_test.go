@@ -47,3 +47,34 @@ func TestPublicKeyCredentialCreationOptions_MarshalJSON(t *testing.T) {
 	assert.NoError(t, err)
 	assert.JSONEq(t, string(rawJSON), string(actualJSON))
 }
+
+func TestPublicKeyCredentialUserEntity_MarshalJSON(t *testing.T) {
+	t.Run("valid", func(t *testing.T) {
+		user := PublicKeyCredentialUserEntity{
+			ID:          []byte("abcd-1234"),
+			DisplayName: "Test User",
+			Name:        "test-user",
+		}
+		actualJSON, err := user.MarshalJSON()
+		assert.NoError(t, err)
+		expectedJSON := `{
+			"displayName": "Test User",
+			"name": "test-user",
+			"id": "YWJjZC0xMjM0"
+		}`
+		assert.JSONEq(t, expectedJSON, string(actualJSON))
+	})
+	t.Run("null id", func(t *testing.T) {
+		user := PublicKeyCredentialUserEntity{
+			DisplayName: "Test User",
+			Name:        "test-user",
+		}
+		actualJSON, err := user.MarshalJSON()
+		assert.NoError(t, err)
+		expectedJSON := `{
+			"displayName": "Test User",
+			"name": "test-user"
+		}`
+		assert.JSONEq(t, expectedJSON, string(actualJSON))
+	})
+}

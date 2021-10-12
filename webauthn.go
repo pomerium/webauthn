@@ -245,7 +245,7 @@ type PublicKeyCredentialDescriptor struct {
 	// This OPTIONAL member contains a hint as to how the client might communicate with the managing authenticator
 	// of the public key credential the caller is referring to. The values SHOULD be members of
 	// AuthenticatorTransport but client platforms MUST ignore unknown values.
-	Transports []string `json:"transports"`
+	Transports []string `json:"transports,omitempty"`
 }
 
 // MarshalJSON marshals the PublicKeyCredentialDescriptor as JSON.
