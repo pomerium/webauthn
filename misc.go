@@ -2,6 +2,8 @@ package webauthn
 
 import (
 	"bytes"
+	"crypto"
+	"crypto/subtle"
 	"encoding/binary"
 	"io"
 
@@ -29,6 +31,15 @@ func extractCBOR(data []byte) (cborData, remaining []byte, err error) {
 		return nil, nil, err
 	}
 	return data[:decoder.NumBytesRead()], data[decoder.NumBytesRead():], nil
+}
+
+func hashIsEqual(hash crypto.Hash, data []byte, expectedHashSum []byte) bool {
+	if !hash.Available() {
+		return false
+	}
+	h := hash.New()
+	h.Write(data)
+	return subtle.ConstantTimeCompare(h.Sum(nil), expectedHashSum) == 1
 }
 
 func write(w io.Writer, bs ...byte) error {
