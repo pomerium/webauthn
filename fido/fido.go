@@ -41,7 +41,7 @@ func (aaguid *AAGUID) UnmarshalJSON(raw []byte) error {
 	return err
 }
 
-// Valid returns true if the AAGUID is not all zeroes..
+// Valid returns true if the AAGUID is not all zeroes.
 func (aaguid AAGUID) Valid() bool {
 	return aaguid != AAGUID{}
 }
