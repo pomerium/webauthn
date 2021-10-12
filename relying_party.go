@@ -135,7 +135,7 @@ func (rp *RelyingParty) VerifyAuthenticationCeremony(
 	}
 
 	// 11. Verify that the value of C.type is the string webauthn.get.
-	if clientData.Type != "webauthn.get" {
+	if clientData.Type != ClientDataTypeGet {
 		return nil, fmt.Errorf("invalid client data type")
 	}
 
@@ -237,7 +237,7 @@ func (rp *RelyingParty) VerifyRegistrationCeremony(
 	}
 
 	//  7. Verify that the value of C.type is webauthn.create.
-	if clientData.Type != "webauthn.create" {
+	if clientData.Type != ClientDataTypeCreate {
 		return nil, fmt.Errorf("invalid client data type")
 	}
 

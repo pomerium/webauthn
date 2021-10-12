@@ -13,13 +13,13 @@ type AuthenticatorSelectionCriteria struct {
 	// AuthenticatorAttachment, if present, filters eligible authenticators. The value SHOULD be a member of
 	// AuthenticatorAttachment but client platforms MUST ignore unknown values, treating an unknown value as if the
 	// member does not exist.
-	AuthenticatorAttachment string `json:"authenticatorAttachment,omitempty"`
+	AuthenticatorAttachment AuthenticatorAttachment `json:"authenticatorAttachment,omitempty"`
 	// ResidentKey specifies the extent to which the Relying Party desires to create a client-side discoverable
 	// credential. For historical reasons the naming retains the deprecated “resident” terminology. The value
 	// SHOULD be a member of ResidentKeyRequirement but client platforms MUST ignore unknown values, treating an
 	// unknown value as if the member does not exist. If no value is given then the effective value is required if
 	// requireResidentKey is true or discouraged if it is false or absent.
-	ResidentKey string `json:"residentKey,omitempty"`
+	ResidentKey ResidentKeyType `json:"residentKey,omitempty"`
 	// RequireResidentKey is retained for backwards compatibility with WebAuthn Level 1 and, for historical reasons,
 	// its naming retains the deprecated “resident” terminology for discoverable credentials. Relying Parties SHOULD
 	// set it to true if, and only if, residentKey is set to required.
@@ -28,7 +28,7 @@ type AuthenticatorSelectionCriteria struct {
 	// operation. Eligible authenticators are filtered to only those capable of satisfying this requirement. The
 	// value SHOULD be a member of UserVerificationRequirement but client platforms MUST ignore unknown values,
 	// treating an unknown value as if the member does not exist.
-	UserVerification string `json:"userVerification,omitempty"`
+	UserVerification UserVerificationRequirement `json:"userVerification,omitempty"`
 }
 
 // CollectedClientData represents the contextual bindings of both the WebAuthn Relying Party and the client.
@@ -36,7 +36,7 @@ type CollectedClientData struct {
 	// Type contains the string "webauthn.create" when creating new credentials, and "webauthn.get" when
 	// getting an assertion from an existing credential. The purpose of this member is to prevent certain types of
 	// signature confusion attacks (where an attacker substitutes one legitimate signature for another).
-	Type string `json:"type"`
+	Type ClientDataType `json:"type"`
 	// Challenge contains the base64url encoding of the challenge provided by the Relying Party.
 	Challenge string `json:"challenge"`
 	// Origin contains the fully qualified origin of the requester, as provided to the authenticator by the
@@ -58,7 +58,7 @@ type PublicKeyAssertionCredential struct {
 	// ID is the base64url encoding of the RawID.
 	ID string `json:"id"`
 	// Type is "public-key".
-	Type string `json:"type"`
+	Type PublicKeyCredentialType `json:"type"`
 	// RawID is the credential ID, chosen by the authenticator. The credential ID is used to look up credentials for
 	// use, and is therefore expected to be globally unique with high probability across all credentials of the same
 	// type, across all authenticators.
@@ -105,7 +105,7 @@ type PublicKeyCreationCredential struct {
 	// ID is the base64url encoding of the RawID.
 	ID string `json:"id"`
 	// Type is "public-key".
-	Type string `json:"type"`
+	Type PublicKeyCredentialType `json:"type"`
 	// RawID is the credential ID, chosen by the authenticator. The credential ID is used to look up credentials for
 	// use, and is therefore expected to be globally unique with high probability across all credentials of the same
 	// type, across all authenticators.
@@ -180,7 +180,7 @@ type PublicKeyCredentialCreationOptions struct {
 	// This member is intended for use by Relying Parties that wish to express their preference for attestation
 	// conveyance. Its values SHOULD be members of AttestationConveyancePreference. Client platforms MUST ignore
 	// unknown values, treating an unknown value as if the member does not exist. Its default value is "none".
-	Attestation string `json:"attestation,omitempty"`
+	Attestation AttestationConveyancePreference `json:"attestation,omitempty"`
 	// This member contains additional parameters requesting additional processing by the client and authenticator.
 	// For example, the caller may request that only authenticators with certain capabilities be used to create the
 	// credential, or that particular information be returned in the attestation object.
@@ -239,13 +239,13 @@ type PublicKeyCredentialDescriptor struct {
 	// This member contains the type of the public key credential the caller is referring to. The value SHOULD be a
 	// member of PublicKeyCredentialType but client platforms MUST ignore any PublicKeyCredentialDescriptor with an
 	// unknown type.
-	Type string `json:"type"`
+	Type PublicKeyCredentialType `json:"type"`
 	// This member contains the credential ID of the public key credential the caller is referring to.
 	ID []byte `json:"id"`
 	// This OPTIONAL member contains a hint as to how the client might communicate with the managing authenticator
 	// of the public key credential the caller is referring to. The values SHOULD be members of
 	// AuthenticatorTransport but client platforms MUST ignore unknown values.
-	Transports []string `json:"transports,omitempty"`
+	Transports []AuthenticatorTransport `json:"transports,omitempty"`
 }
 
 // MarshalJSON marshals the PublicKeyCredentialDescriptor as JSON.
@@ -306,7 +306,7 @@ type PublicKeyCredentialRequestOptions struct {
 	// operation. The value SHOULD be a member of UserVerificationRequirement but client platforms MUST ignore
 	// unknown values, treating an unknown value as if the member does not exist. Eligible authenticators are
 	// filtered to only those capable of satisfying this requirement.
-	UserVerification string `json:"userVerification,omitempty"`
+	UserVerification UserVerificationRequirement `json:"userVerification,omitempty"`
 	// This OPTIONAL member contains additional parameters requesting additional processing by the client and
 	// authenticator. For example, if transaction confirmation is sought from the user, then the prompt string
 	// might be included as an extension.
@@ -416,26 +416,29 @@ func (user *PublicKeyCredentialUserEntity) UnmarshalJSON(raw []byte) error {
 type TokenBinding struct {
 	// This member SHOULD be a member of TokenBindingStatus but client platforms MUST ignore unknown values,
 	// treating an unknown value as if the tokenBinding member does not exist.
-	Status string `json:"status"`
+	Status TokenBindingStatus `json:"status"`
 	// This member MUST be present if status is present, and MUST be a base64url encoding of the Token Binding ID
 	// that was used when communicating with the Relying Party.
 	ID string `json:"id"`
 }
 
+// AttestationConveyancePreference indicates what the authenticator should provide for attestation.
+type AttestationConveyancePreference string
+
 const (
 	// AttestationConveyanceNone indicates that the Relying Party is not interested in authenticator attestation. For
 	// example, in order to potentially avoid having to obtain user consent to relay identifying information to the
 	// Relying Party, or to save a roundtrip to an Attestation CA or Anonymization CA. This is the default value.
-	AttestationConveyanceNone = "none"
+	AttestationConveyanceNone AttestationConveyancePreference = "none"
 	// AttestationConveyanceIndirect indicates that the Relying Party prefers an attestation conveyance yielding
 	// verifiable attestation statements, but allows the client to decide how to obtain such attestation statements.
 	// The client MAY replace the authenticator-generated attestation statements with attestation statements generated
 	// by an Anonymization CA, in order to protect the user’s privacy, or to assist Relying Parties with attestation
 	// verification in a heterogeneous ecosystem.
-	AttestationConveyanceIndirect = "indirect"
+	AttestationConveyanceIndirect AttestationConveyancePreference = "indirect"
 	// AttestationConveyanceDirect indicates that the Relying Party wants to receive the attestation statement as
 	// generated by the authenticator.
-	AttestationConveyanceDirect = "direct"
+	AttestationConveyanceDirect AttestationConveyancePreference = "direct"
 	// AttestationConveyanceEnterprise indicates that the Relying Party wants to receive an attestation statement that
 	// may include uniquely identifying information. This is intended for controlled deployments within an enterprise
 	// where the organization wishes to tie registrations to specific authenticators. User agents MUST NOT provide such
@@ -443,81 +446,95 @@ const (
 	//
 	// If permitted, the user agent SHOULD signal to the authenticator (at invocation time) that enterprise attestation
 	// is requested, and convey the resulting AAGUID and attestation statement, unaltered, to the Relying Party.
-	AttestationConveyanceEnterprise = "enterprise"
+	AttestationConveyanceEnterprise AttestationConveyancePreference = "enterprise"
 )
+
+// AuthenticatorAttachment indicates what kind of authenticator should be used.
+type AuthenticatorAttachment string
 
 const (
 	// AuthenticatorAttachmentPlatform indicates platform attachment.
-	AuthenticatorAttachmentPlatform = "platform"
+	AuthenticatorAttachmentPlatform AuthenticatorAttachment = "platform"
 	// AuthenticatorAttachmentCrossPlatform indicates cross-platform attachment.
-	AuthenticatorAttachmentCrossPlatform = "cross-platform"
+	AuthenticatorAttachmentCrossPlatform AuthenticatorAttachment = "cross-platform"
 )
+
+// AuthenticatorTransport indicates how the authenticator is contacted.
+type AuthenticatorTransport string
 
 const (
 	// AuthenticatorTransportUSB indicates the respective authenticator can be contacted over removable USB.
-	AuthenticatorTransportUSB = "usb"
+	AuthenticatorTransportUSB AuthenticatorTransport = "usb"
 	// AuthenticatorTransportNFC indicates the respective authenticator can be contacted over Near Field Communication
 	// (NFC).
-	AuthenticatorTransportNFC = "nfc"
+	AuthenticatorTransportNFC AuthenticatorTransport = "nfc"
 	// AuthenticatorTransportBLE indicates the respective authenticator can be contacted over Bluetooth Smart
 	// (Bluetooth Low Energy / BLE).
-	AuthenticatorTransportBLE = "ble"
+	AuthenticatorTransportBLE AuthenticatorTransport = "ble"
 	// AuthenticatorTransportInternal indicates the respective authenticator is contacted using a client
 	// device-specific transport, i.e., it is a platform authenticator. These authenticators are not removable from the
 	// client device.
-	AuthenticatorTransportInternal = "internal"
+	AuthenticatorTransportInternal AuthenticatorTransport = "internal"
 )
+
+// ClientDataType distinguishes between creating new credentials and using an existing credential.
+type ClientDataType string
 
 const (
 	// ClientDataTypeCreate is used when creating new credentials.
-	ClientDataTypeCreate = "webauthn.create"
+	ClientDataTypeCreate ClientDataType = "webauthn.create"
 	// ClientDataTypeGet is used when getting an assertion on an existing credential.
-	ClientDataTypeGet = "webauthn.get"
+	ClientDataTypeGet ClientDataType = "webauthn.get"
 )
 
-const (
-	// COSEAlgorithmIdentifierES256 is ECDSA w/ SHA-256.
-	COSEAlgorithmIdentifierES256 = -7
-	// COSEAlgorithmIdentifierRS256 is RSASSA-PKCS1-v1_5 using SHA-256.
-	COSEAlgorithmIdentifierRS256 = -257
-)
+// PublicKeyCredentialType indicates the type of credential. (only public-key is currently supported)
+type PublicKeyCredentialType string
 
 const (
 	// PublicKeyCredentialTypePublicKey represents a public key credential.
-	PublicKeyCredentialTypePublicKey = "public-key"
+	PublicKeyCredentialTypePublicKey PublicKeyCredentialType = "public-key"
 )
+
+// ResidentKeyType is used to indicate various resident key options.
+type ResidentKeyType string
 
 const (
 	// ResidentKeyDiscouraged indicates the Relying Party prefers creating a server-side credential, but will accept a
 	// client-side discoverable credential.
-	ResidentKeyDiscouraged = "discouraged"
+	ResidentKeyDiscouraged ResidentKeyType = "discouraged"
 	// ResidentKeyPreferred indicates the Relying Party strongly prefers creating a client-side discoverable
 	// credential, but will accept a server-side credential. For example, user agents SHOULD guide the user through
 	// setting up user verification if needed to create a client-side discoverable credential in this case. This takes
 	// precedence over the setting of userVerification.
-	ResidentKeyPreferred = "preferred"
+	ResidentKeyPreferred ResidentKeyType = "preferred"
 	// ResidentKeyRequired indicates the Relying Party requires a client-side discoverable credential, and is prepared
 	// to receive an error if a client-side discoverable credential cannot be created.
-	ResidentKeyRequired = "required"
+	ResidentKeyRequired ResidentKeyType = "required"
 )
+
+// TokenBindingStatus indicates different token binding options.
+type TokenBindingStatus string
 
 const (
 	// TokenBindingPresent indicates token binding was used when communicating with the Relying Party. In this case,
 	// the id member MUST be present.
-	TokenBindingPresent = "present"
+	TokenBindingPresent TokenBindingStatus = "present"
 	// TokenBindingSupported indicates the client supports token binding, but it was not negotiated when
 	// communicating with the Relying Party.
-	TokenBindingSupported = "supported"
+	TokenBindingSupported TokenBindingStatus = "supported"
 )
+
+// UserVerificationRequirement indicates which type of user verification to use.
+type UserVerificationRequirement string
 
 const (
 	// UserVerificationRequired indicates that the Relying Party requires user verification for the operation and will
 	// fail the operation if the response does not have the UV flag set.
-	UserVerificationRequired = "required"
+	UserVerificationRequired UserVerificationRequirement = "required"
 	// UserVerificationPreferred indicates that the Relying Party prefers user verification for the operation if
 	// possible, but will not fail the operation if the response does not have the UV flag set.
-	UserVerificationPreferred = "preferred"
+	UserVerificationPreferred UserVerificationRequirement = "preferred"
 	// UserVerificationDiscouraged indicates that the Relying Party does not want user verification employed during the
 	// operation (e.g., in the interest of minimizing disruption to the user interaction flow).
-	UserVerificationDiscouraged = "discouraged"
+	UserVerificationDiscouraged UserVerificationRequirement = "discouraged"
 )

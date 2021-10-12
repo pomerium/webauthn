@@ -1,7 +1,6 @@
 package webauthn
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"os"
 	"testing"
@@ -11,30 +10,36 @@ import (
 )
 
 func TestRelyingParty_VerifyAuthenticationCeremony(t *testing.T) {
-	t.Skip()
-	options := readPublicKeyCredentialRequestOptions(t, "None")
-	credential := readPublicKeyAssertionCredential(t, "None")
-
-	cd, _ := credential.Response.UnmarshalClientData()
-
-	t.Logf("%#v", cd.Origin)
+	options := readPublicKeyCredentialRequestOptions(t, "GoogleTitan")
+	credential := readPublicKeyAssertionCredential(t, "GoogleTitan")
 
 	storage := NewInMemoryCredentialStorage()
-	storage.SetCredential(&Credential{
+	// authentication assumes an existing public key, so set it
+	_ = storage.SetCredential(&Credential{
 		ID: []byte{
-			0xf1, 0x3c, 0x7f, 0x08, 0x3c, 0xa2, 0x29, 0xe0,
-			0xb4, 0x03, 0xe8, 0x87, 0x34, 0x6e, 0xfc, 0x7f,
-			0x98, 0x53, 0x10, 0x3a, 0x30, 0x91, 0x75, 0x67,
-			0x39, 0x7a, 0xd1, 0xd8, 0xaf, 0x87, 0x04, 0x61,
-			0x87, 0xef, 0x95, 0x31, 0x85, 0x60, 0xf3, 0x5a,
-			0x1a, 0x2a, 0xcf, 0x7d, 0xb0, 0x1d, 0x06, 0xb9,
-			0x69, 0xf9, 0xab, 0xf4, 0xec, 0xf3, 0x07, 0x3e,
-			0xcf, 0x0f, 0x71, 0xe8, 0x84, 0xe8, 0x41, 0x20,
+			0xed, 0xc5, 0x97, 0xe5, 0x51, 0xb5, 0x1f, 0xb2,
+			0x60, 0x04, 0x05, 0x6d, 0xc5, 0xfd, 0xef, 0x69,
+			0x4d, 0xd1, 0xc6, 0xfc, 0xa4, 0xb5, 0x2c, 0x84,
+			0xa4, 0xbc, 0x5c, 0x0a, 0xae, 0x8b, 0x6a, 0xa5,
+			0x98, 0xdd, 0x65, 0x75, 0x61, 0x67, 0x0a, 0xbd,
+			0xa8, 0xc3, 0xec, 0xa1, 0xda, 0x1d, 0xd1, 0x28,
+			0xa4, 0xd4, 0x22, 0x6d, 0xb0, 0x9b, 0xbd, 0x3a,
+			0x41, 0xaa, 0xd1, 0xd7, 0x49, 0x94, 0x67, 0xaa,
 		},
-		PublicKey: []byte{},
+		PublicKey: []byte{
+			0xa5, 0x01, 0x02, 0x03, 0x26, 0x20, 0x01, 0x21,
+			0x58, 0x20, 0x93, 0x9f, 0x98, 0xa3, 0xdd, 0x89,
+			0x22, 0xfb, 0xa0, 0xa8, 0x2c, 0xbd, 0xf7, 0xf7,
+			0xa3, 0x8b, 0x57, 0xd9, 0x58, 0xf8, 0xc3, 0xa4,
+			0xed, 0xc6, 0x64, 0xf7, 0x46, 0x3b, 0xcf, 0xe3,
+			0x45, 0x64, 0x22, 0x58, 0x20, 0x31, 0xa3, 0xaf,
+			0xa1, 0xda, 0x87, 0x5a, 0x08, 0x4b, 0xd0, 0x3a,
+			0xcf, 0x33, 0x3e, 0xf8, 0x40, 0x81, 0x1a, 0x2f,
+			0xe4, 0xa1, 0x0b, 0x4a, 0x4b, 0x51, 0xa9, 0xc0,
+			0xcb, 0xaf, 0x4b, 0x84, 0xfb,
+		},
 	})
-
-	rp := NewRelyingParty("https://localhost:44329", storage)
+	rp := NewRelyingParty("http://localhost:5000", storage)
 	_, err := rp.VerifyAuthenticationCeremony(options, credential)
 	assert.NoError(t, err)
 }
@@ -61,10 +66,10 @@ func readPublicKeyCredentialCreationOptions(t *testing.T, name string) *PublicKe
 func readPublicKeyCreationCredential(t *testing.T, name string) *PublicKeyCreationCredential {
 	raw, err := os.ReadFile("testdata/attestation" + name + "Response.json")
 	require.NoError(t, err)
-	var options PublicKeyCreationCredential
-	err = json.Unmarshal(raw, &options)
+	var credential PublicKeyCreationCredential
+	err = json.Unmarshal(raw, &credential)
 	require.NoError(t, err)
-	return &options
+	return &credential
 }
 
 func readPublicKeyCredentialRequestOptions(t *testing.T, name string) *PublicKeyCredentialRequestOptions {
@@ -79,35 +84,8 @@ func readPublicKeyCredentialRequestOptions(t *testing.T, name string) *PublicKey
 func readPublicKeyAssertionCredential(t *testing.T, name string) *PublicKeyAssertionCredential {
 	raw, err := os.ReadFile("testdata/assertion" + name + "Response.json")
 	require.NoError(t, err)
-	var obj struct {
-		ID       string `json:"id"`
-		Response struct {
-			AuthenticatorData string `json:"authenticatorData"`
-			ClientDataJSON    string `json:"clientDataJson"`
-			Signature         string `json:"signature"`
-			UserHandle        []byte `json:"userHandle"`
-		} `json:"response"`
-	}
-	err = json.Unmarshal(raw, &obj)
+	var credential PublicKeyAssertionCredential
+	err = json.Unmarshal(raw, &credential)
 	require.NoError(t, err)
-	rawID, err := base64.RawURLEncoding.DecodeString(obj.ID)
-	require.NoError(t, err)
-	rawAuthenticatorData, err := base64.RawURLEncoding.DecodeString(obj.Response.AuthenticatorData)
-	require.NoError(t, err)
-	rawClientDataJSON, err := base64.RawURLEncoding.DecodeString(obj.Response.ClientDataJSON)
-	require.NoError(t, err)
-	rawSignature, err := base64.RawURLEncoding.DecodeString(obj.Response.Signature)
-	require.NoError(t, err)
-	return &PublicKeyAssertionCredential{
-		ID:    obj.ID,
-		Type:  "public-key",
-		RawID: rawID,
-		Response: AuthenticatorAssertionResponse{
-			ClientDataJSON:    rawClientDataJSON,
-			AuthenticatorData: rawAuthenticatorData,
-			Signature:         rawSignature,
-			UserHandle:        nil,
-		},
-		ClientExtensionResults: nil,
-	}
+	return &credential
 }

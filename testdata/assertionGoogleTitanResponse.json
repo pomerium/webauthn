@@ -1,0 +1,10 @@
+{
+  "id": "7cWX5VG1H7JgBAVtxf3vaU3RxvyktSyEpLxcCq6LaqWY3WV1YWcKvajD7KHaHdEopNQibbCbvTpBqtHXSZRnqg",
+  "type": "public-key",
+  "rawId": "7cWX5VG1H7JgBAVtxf3vaU3RxvyktSyEpLxcCq6LaqWY3WV1YWcKvajD7KHaHdEopNQibbCbvTpBqtHXSZRnqg",
+  "response": {
+    "clientDataJSON": "eyJ0eXBlIjoid2ViYXV0aG4uZ2V0IiwiY2hhbGxlbmdlIjoiZEdWemRDMWphR0ZzYkdWdVoyVSIsIm9yaWdpbiI6Imh0dHA6Ly9sb2NhbGhvc3Q6NTAwMCIsImNyb3NzT3JpZ2luIjpmYWxzZX0",
+    "authenticatorData": "SZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2MBAAAAAQ",
+    "signature": "MEYCIQCqBbzRvp3ZmvseoMnrevFt0HNhvIh0idFdjREw7kmv_AIhAPFPTNL0lnAsgCmemU4BReqSBPYKAw5uEKfmYI4rp9Lf"
+  }
+}
