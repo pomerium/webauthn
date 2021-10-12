@@ -2,7 +2,8 @@ package webauthn
 
 import (
 	"crypto/sha256"
-	"time"
+
+	"github.com/pomerium/webauthn/cose"
 )
 
 // AuthenticatorSelectionCriteria specifies requirements regarding authenticator attributes.
@@ -50,82 +51,6 @@ type CollectedClientData struct {
 // ClientDataJSONHash represents the SHA-256 hash of the clientDataJSON data.
 type ClientDataJSONHash = [sha256.Size]byte
 
-// PublicKeyAssertionCredential contains the attributes when a new assertion is requested.
-type PublicKeyAssertionCredential struct {
-	// ID is the base64url encoding of the RawID.
-	ID string `json:"id"`
-	// Type is "public-key".
-	Type string `json:"type"`
-	// RawID is the credential ID, chosen by the authenticator. The credential ID is used to look up credentials for
-	// use, and is therefore expected to be globally unique with high probability across all credentials of the same
-	// type, across all authenticators.
-	RawID []byte `json:"rawId"`
-	// Response contains the authenticator's response to the client's request to generate an authentication
-	// assertion.
-	Response AuthenticatorAssertionResponse `json:"response"`
-	// ClientExtensionResults is a map containing extension identifier → client extension output entries produced by
-	// the extension’s client extension processing.
-	ClientExtensionResults map[string]interface{} `json:"clientExtensionResults"`
-}
-
-// PublicKeyCreationCredential contains the attributes when a new credential is created.
-type PublicKeyCreationCredential struct {
-	// ID is the base64url encoding of the RawID.
-	ID string `json:"id"`
-	// Type is "public-key".
-	Type string `json:"type"`
-	// RawID is the credential ID, chosen by the authenticator. The credential ID is used to look up credentials for
-	// use, and is therefore expected to be globally unique with high probability across all credentials of the same
-	// type, across all authenticators.
-	RawID []byte `json:"rawId"`
-	// Response contains the authenticator's response to the client's request to create a public key credential.
-	Response AuthenticatorAttestationResponse `json:"response"`
-	// ClientExtensionResults is a map containing extension identifier → client extension output entries produced by
-	// the extension’s client extension processing.
-	ClientExtensionResults map[string]interface{} `json:"clientExtensionResults"`
-}
-
-// The PublicKeyCredentialCreationOptions supplies create() with the data it needs to generate a new credential.
-type PublicKeyCredentialCreationOptions struct {
-	// This member contains data about the Relying Party responsible for the request.
-	//
-	// Its value’s name member is REQUIRED.
-	//
-	// Its value’s id member specifies the RP ID the credential should be scoped to. If omitted, its value will be
-	// the CredentialsContainer object’s relevant settings object's origin's effective domain.
-	RP PublicKeyCredentialRpEntity `json:"rp"`
-	// This member contains data about the user account for which the Relying Party is requesting attestation.
-	//
-	// Its value’s name, displayName and id members are REQUIRED.
-	User PublicKeyCredentialUserEntity `json:"user"`
-	// This member contains a challenge intended to be used for generating the newly created credential’s
-	// attestation object.
-	Challenge []byte `json:"challenge"`
-	// This member contains information about the desired properties of the credential to be created. The sequence
-	// is ordered from most preferred to least preferred. The client makes a best-effort to create the most
-	// preferred credential that it can.
-	PubKeyCredParams []PublicKeyCredentialParameters `json:"pubKeyCredParams"`
-	// This member specifies a time, in milliseconds, that the caller is willing to wait for the call to complete.
-	// This is treated as a hint, and MAY be overridden by the client.
-	Timeout time.Duration `json:"timeout"`
-	// This member is intended for use by Relying Parties that wish to limit the creation of multiple credentials
-	// for the same account on a single authenticator. The client is requested to return an error if the new
-	// credential would be created on an authenticator that also contains one of the credentials enumerated in this
-	// parameter.
-	ExcludeCredentials []PublicKeyCredentialDescriptor `json:"excludeCredentials"`
-	// This member is intended for use by Relying Parties that wish to select the appropriate authenticators to
-	// participate in the create() operation.
-	AuthenticatorSelection AuthenticatorSelectionCriteria `json:"authenticatorSelection"`
-	// This member is intended for use by Relying Parties that wish to express their preference for attestation
-	// conveyance. Its values SHOULD be members of AttestationConveyancePreference. Client platforms MUST ignore
-	// unknown values, treating an unknown value as if the member does not exist. Its default value is "none".
-	Attestation string `json:"attestation"`
-	// This member contains additional parameters requesting additional processing by the client and authenticator.
-	// For example, the caller may request that only authenticators with certain capabilities be used to create the
-	// credential, or that particular information be returned in the attestation object.
-	Extensions map[string]interface{} `json:"extensions"`
-}
-
 // The PublicKeyCredentialDescriptor contains the attributes that are specified by a caller when referring to a
 // public key credential as an input parameter to the create() or get() methods.
 type PublicKeyCredentialDescriptor struct {
@@ -147,34 +72,7 @@ type PublicKeyCredentialParameters struct {
 	Type string `json:"type"`
 	// This member specifies the cryptographic signature algorithm with which the newly generated credential will
 	// be used, and thus also the type of asymmetric key pair to be generated, e.g., RSA or Elliptic Curve.
-	COSEAlgorithmIdentifier int64 `json:"alg"`
-}
-
-// The PublicKeyCredentialRequestOptions supplies get() with the data it needs to generate an assertion.
-// Its challenge member MUST be present, while its other members are OPTIONAL.
-type PublicKeyCredentialRequestOptions struct {
-	// This member represents a challenge that the selected authenticator signs, along with other data, when
-	// producing an authentication assertion.
-	Challenge []byte `json:"challenge"`
-	// This OPTIONAL member specifies a time, in milliseconds, that the caller is willing to wait for the call to
-	// complete. The value is treated as a hint, and MAY be overridden by the client.
-	Timeout time.Duration `json:"timeout"`
-	// This OPTIONAL member specifies the relying party identifier claimed by the caller. If omitted, its
-	// value will be the CredentialsContainer object’s relevant settings object's origin's effective domain.
-	RPID string `json:"rpId"`
-	// This OPTIONAL member contains a list of PublicKeyCredentialDescriptor objects representing public key
-	// credentials acceptable to the caller, in descending order of the caller’s preference (the first item in the
-	// list is the most preferred credential, and so on down the list).
-	AllowCredentials []PublicKeyCredentialDescriptor `json:"allowCredentials"`
-	// This OPTIONAL member describes the Relying Party's requirements regarding user verification for the get()
-	// operation. The value SHOULD be a member of UserVerificationRequirement but client platforms MUST ignore
-	// unknown values, treating an unknown value as if the member does not exist. Eligible authenticators are
-	// filtered to only those capable of satisfying this requirement.
-	UserVerification string `json:"userVerification"`
-	// This OPTIONAL member contains additional parameters requesting additional processing by the client and
-	// authenticator. For example, if transaction confirmation is sought from the user, then the prompt string
-	// might be included as an extension.
-	Extensions map[string]interface{} `json:"extensions"`
+	COSEAlgorithmIdentifier cose.Algorithm `json:"alg"`
 }
 
 // The PublicKeyCredentialRpEntity is used to supply additional Relying Party attributes when creating a new

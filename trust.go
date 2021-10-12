@@ -204,18 +204,16 @@ func (provider *FIDOMetadataServiceTrustAnchorProvider) getLookupLocked(
 
 	lookup := map[AAGUID]*x509.CertPool{}
 	for _, entry := range payload.Entries {
-		if !entry.AAGUID.Valid() {
-			// ignore empty AAGUIDs
-			continue
-		}
-
 		certificates, err := entry.MetadataStatement.ParseAttestationRootCertificates()
 		if err != nil {
 			// ignore invalid certificates
 			continue
 		}
 
-		pool := x509.NewCertPool()
+		pool, ok := lookup[entry.AAGUID]
+		if !ok {
+			pool = x509.NewCertPool()
+		}
 		for _, certificate := range certificates {
 			pool.AddCert(certificate)
 		}

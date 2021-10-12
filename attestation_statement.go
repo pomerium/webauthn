@@ -40,6 +40,17 @@ const (
 	AttestationFormatTPM              = "tpm"
 )
 
+// AllAttestationFormats are all the attestation formats.
+var AllAttestationFormats = []AttestationFormat{
+	AttestationFormatAndroidKey,
+	AttestationFormatAndroidSafetyNet,
+	AttestationFormatApple,
+	AttestationFormatFIDOU2F,
+	AttestationFormatNone,
+	AttestationFormatPacked,
+	AttestationFormatTPM,
+}
+
 // AttestationType is the attestation type.
 type AttestationType string
 
@@ -71,6 +82,15 @@ const (
 	// AttestationTypeUnknown indicates the attestation type is not known.
 	AttestationTypeUnknown = "Unknown"
 )
+
+// AllAttestationTypes are all the known attestation types.
+var AllAttestationTypes = []AttestationType{
+	AttestationTypeBasic,
+	AttestationTypeSelf,
+	AttestationTypeAttestationCA,
+	AttestationTypeAnonymizationCA,
+	AttestationTypeNone,
+}
 
 // AttestationStatement is a map of data stored in an AttestationObject according to one of the pre-defined attestation
 // statement formats.

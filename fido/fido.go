@@ -25,6 +25,11 @@ func (aaguid AAGUID) Equals(other AAGUID) bool {
 	return subtle.ConstantTimeCompare(aaguid[:], other[:]) == 1
 }
 
+// MarshalJSON marshals the AAGUID into JSON.
+func (aaguid AAGUID) MarshalJSON() ([]byte, error) {
+	return json.Marshal(aaguid.String())
+}
+
 // String returns the AAGUID as a string.
 func (aaguid AAGUID) String() string {
 	return uuid.UUID(aaguid).String()

@@ -10,6 +10,10 @@ import (
 	"github.com/fxamacker/cbor/v2"
 )
 
+func bytesAreEqual(x, y []byte) bool {
+	return subtle.ConstantTimeCompare(x, y) == 1
+}
+
 func concat(bss ...[]byte) []byte {
 	sz := 0
 	for _, bs := range bss {
@@ -40,6 +44,10 @@ func hashIsEqual(hash crypto.Hash, data []byte, expectedHashSum []byte) bool {
 	h := hash.New()
 	h.Write(data)
 	return subtle.ConstantTimeCompare(h.Sum(nil), expectedHashSum) == 1
+}
+
+func stringsAreEqual(x, y string) bool {
+	return bytesAreEqual([]byte(x), []byte(y))
 }
 
 func write(w io.Writer, bs ...byte) error {
