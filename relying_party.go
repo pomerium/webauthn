@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"net/url"
 
 	"github.com/pomerium/webauthn/cose"
 )
@@ -34,6 +35,33 @@ type CredentialStorage interface {
 	SetCredential(credential *Credential) error
 }
 
+// An InMemoryCredentialStorage stores credential in an in-memory map.
+type InMemoryCredentialStorage struct {
+	m map[string]*Credential
+}
+
+// NewInMemoryCredentialStorage creates a new InMemoryCredentialStorage.
+func NewInMemoryCredentialStorage() *InMemoryCredentialStorage {
+	return &InMemoryCredentialStorage{
+		m: make(map[string]*Credential),
+	}
+}
+
+// GetCredential gets the credential from the map.
+func (storage *InMemoryCredentialStorage) GetCredential(credentialID []byte) (*Credential, error) {
+	credential, ok := storage.m[string(credentialID)]
+	if !ok {
+		return nil, ErrCredentialNotFound
+	}
+	return credential, nil
+}
+
+// SetCredential sets the credential in the map.
+func (storage *InMemoryCredentialStorage) SetCredential(credential *Credential) error {
+	storage.m[string(credential.ID)] = credential
+	return nil
+}
+
 // A RelyingParty is the entity that utilizes the Web Authentication API to register and
 // authenticate users.
 type RelyingParty struct {
@@ -43,12 +71,17 @@ type RelyingParty struct {
 }
 
 // NewRelyingParty creates a new RelyingParty.
-func NewRelyingParty(origin string, credentialStorage CredentialStorage) *RelyingParty {
-	return &RelyingParty{
-		origin:            origin,
-		id:                []byte(origin),
+func NewRelyingParty(originURL string, credentialStorage CredentialStorage) *RelyingParty {
+	rp := &RelyingParty{
+		origin:            originURL,
 		credentialStorage: credentialStorage,
 	}
+	if u, err := url.Parse(originURL); err == nil {
+		rp.id = []byte(u.Hostname())
+	} else {
+		rp.id = []byte(originURL)
+	}
+	return rp
 }
 
 // VerifyAuthenticationCeremony verifies an authentication ceremony by performing steps
@@ -56,7 +89,7 @@ func NewRelyingParty(origin string, credentialStorage CredentialStorage) *Relyin
 func (rp *RelyingParty) VerifyAuthenticationCeremony(
 	options *PublicKeyCredentialRequestOptions,
 	credential *PublicKeyAssertionCredential,
-
+	verifyOptions ...VerifyOption,
 ) (*Credential, error) {
 	//  4. Let clientExtensionResults be the result of calling credential.getClientExtensionResults().
 

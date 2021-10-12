@@ -2,6 +2,8 @@ package webauthn
 
 import (
 	"crypto/sha256"
+	"encoding/base64"
+	"encoding/json"
 	"time"
 
 	"github.com/pomerium/webauthn/cose"
@@ -28,6 +30,27 @@ type AuthenticatorSelectionCriteria struct {
 	// value SHOULD be a member of UserVerificationRequirement but client platforms MUST ignore unknown values,
 	// treating an unknown value as if the member does not exist.
 	UserVerification string `json:"userVerification"`
+}
+
+// A Base64RawURLBytes is a slice of bytes. The JSON format of these bytes will be base64-raw-url encoded.
+type Base64RawURLBytes []byte
+
+// MarshalJSON marshals the Base64RawURLBytes as JSON.
+func (bs Base64RawURLBytes) MarshalJSON() ([]byte, error) {
+	str := base64.RawURLEncoding.EncodeToString(bs)
+	return json.Marshal(str)
+}
+
+// UnmarshalJSON unmarshals the Base64RawURLBytes from JSON.
+func (bs *Base64RawURLBytes) UnmarshalJSON(raw []byte) error {
+	var str string
+	err := json.Unmarshal(raw, &str)
+	if err != nil {
+		return err
+	}
+
+	*bs, err = base64.RawURLEncoding.DecodeString(str)
+	return err
 }
 
 // CollectedClientData represents the contextual bindings of both the WebAuthn Relying Party and the client.
@@ -61,7 +84,7 @@ type PublicKeyAssertionCredential struct {
 	// RawID is the credential ID, chosen by the authenticator. The credential ID is used to look up credentials for
 	// use, and is therefore expected to be globally unique with high probability across all credentials of the same
 	// type, across all authenticators.
-	RawID []byte `json:"rawId"`
+	RawID Base64RawURLBytes `json:"rawId"`
 	// Response contains the authenticator's response to the client's request to generate an authentication
 	// assertion.
 	Response AuthenticatorAssertionResponse `json:"response"`
@@ -79,7 +102,7 @@ type PublicKeyCreationCredential struct {
 	// RawID is the credential ID, chosen by the authenticator. The credential ID is used to look up credentials for
 	// use, and is therefore expected to be globally unique with high probability across all credentials of the same
 	// type, across all authenticators.
-	RawID []byte `json:"rawId"`
+	RawID Base64RawURLBytes `json:"rawId"`
 	// Response contains the authenticator's response to the client's request to create a public key credential.
 	Response AuthenticatorAttestationResponse `json:"response"`
 	// ClientExtensionResults is a map containing extension identifier → client extension output entries produced by
@@ -102,7 +125,7 @@ type PublicKeyCredentialCreationOptions struct {
 	User PublicKeyCredentialUserEntity `json:"user"`
 	// This member contains a challenge intended to be used for generating the newly created credential’s
 	// attestation object.
-	Challenge []byte `json:"challenge"`
+	Challenge Base64RawURLBytes `json:"challenge"`
 	// This member contains information about the desired properties of the credential to be created. The sequence
 	// is ordered from most preferred to least preferred. The client makes a best-effort to create the most
 	// preferred credential that it can.
@@ -146,7 +169,7 @@ type PublicKeyCredentialDescriptor struct {
 	// unknown type.
 	Type string `json:"type"`
 	// This member contains the credential ID of the public key credential the caller is referring to.
-	ID []byte `json:"id"`
+	ID Base64RawURLBytes `json:"id"`
 	// This OPTIONAL member contains a hint as to how the client might communicate with the managing authenticator
 	// of the public key credential the caller is referring to. The values SHOULD be members of
 	// AuthenticatorTransport but client platforms MUST ignore unknown values.
@@ -167,7 +190,7 @@ type PublicKeyCredentialParameters struct {
 type PublicKeyCredentialRequestOptions struct {
 	// This member represents a challenge that the selected authenticator signs, along with other data, when
 	// producing an authentication assertion.
-	Challenge []byte `json:"challenge"`
+	Challenge Base64RawURLBytes `json:"challenge"`
 	// This OPTIONAL member specifies a time, in milliseconds, that the caller is willing to wait for the call to
 	// complete. The value is treated as a hint, and MAY be overridden by the client.
 	Timeout time.Duration `json:"timeout,omitempty"`
@@ -209,7 +232,7 @@ type PublicKeyCredentialUserEntity struct {
 	//
 	// The user handle MUST NOT contain personally identifying information about the user, such as a username or
 	// e-mail address.
-	ID []byte `json:"id"`
+	ID Base64RawURLBytes `json:"id"`
 	// A human-palatable name for the user account, intended only for display. For example, "Alex Müller" or
 	// "田中倫". The Relying Party SHOULD let the user choose this, and SHOULD NOT restrict the choice more than
 	// necessary.
