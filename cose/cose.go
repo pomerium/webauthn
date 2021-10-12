@@ -49,7 +49,7 @@ func (alg Algorithm) Hash() crypto.Hash {
 	case AlgorithmRS256, AlgorithmPS256, AlgorithmES256:
 		return crypto.SHA256
 	case AlgorithmEdDSA:
-		return 0 // no hashing
+		return 0 // hashing is already part of EdDSA itself
 	default:
 		return 0 // unknown
 	}

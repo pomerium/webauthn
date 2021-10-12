@@ -202,7 +202,7 @@ func verifyTPMAttestationStatementPubAreaMatches(
 	for _, certificate := range certificates {
 		err = checkCertificate(certificate)
 		if err == nil {
-			return err
+			return nil
 		}
 	}
 
