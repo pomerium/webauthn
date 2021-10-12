@@ -5,6 +5,7 @@ go 1.17
 require (
 	github.com/fxamacker/cbor/v2 v2.3.0
 	github.com/google/go-tpm v0.3.2
+	github.com/google/uuid v1.3.0
 	github.com/stretchr/testify v1.7.0
 	gopkg.in/square/go-jose.v2 v2.6.0
 )
