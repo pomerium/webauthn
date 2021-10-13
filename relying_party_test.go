@@ -1,6 +1,7 @@
 package webauthn
 
 import (
+	"context"
 	"encoding/json"
 	"os"
 	"testing"
@@ -15,7 +16,7 @@ func TestRelyingParty_VerifyAuthenticationCeremony(t *testing.T) {
 
 	storage := NewInMemoryCredentialStorage()
 	// authentication assumes an existing public key, so set it
-	_ = storage.SetCredential(&Credential{
+	_ = storage.SetCredential(context.Background(), &Credential{
 		ID: []byte{
 			0xed, 0xc5, 0x97, 0xe5, 0x51, 0xb5, 0x1f, 0xb2,
 			0x60, 0x04, 0x05, 0x6d, 0xc5, 0xfd, 0xef, 0x69,
@@ -40,7 +41,7 @@ func TestRelyingParty_VerifyAuthenticationCeremony(t *testing.T) {
 		},
 	})
 	rp := NewRelyingParty("http://localhost:5000", storage)
-	_, err := rp.VerifyAuthenticationCeremony(options, credential)
+	_, err := rp.VerifyAuthenticationCeremony(context.Background(), options, credential)
 	assert.NoError(t, err)
 }
 
@@ -50,7 +51,7 @@ func TestRelyingParty_VerifyRegistrationCeremony(t *testing.T) {
 
 	storage := NewInMemoryCredentialStorage()
 	rp := NewRelyingParty("http://localhost:5000", storage)
-	_, err := rp.VerifyRegistrationCeremony(options, credential)
+	_, err := rp.VerifyRegistrationCeremony(context.Background(), options, credential)
 	assert.NoError(t, err)
 }
 

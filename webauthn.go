@@ -280,7 +280,7 @@ func (descriptor *PublicKeyCredentialDescriptor) UnmarshalJSON(raw []byte) error
 // PublicKeyCredentialParameters is used to supply additional parameters when creating a new credential.
 type PublicKeyCredentialParameters struct {
 	// This member specifies the type of credential to be created.
-	Type string `json:"type"`
+	Type PublicKeyCredentialType `json:"type"`
 	// This member specifies the cryptographic signature algorithm with which the newly generated credential will
 	// be used, and thus also the type of asymmetric key pair to be generated, e.g., RSA or Elliptic Curve.
 	COSEAlgorithmIdentifier cose.Algorithm `json:"alg"`

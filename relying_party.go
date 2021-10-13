@@ -1,6 +1,7 @@
 package webauthn
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/base64"
 	"errors"
@@ -30,9 +31,9 @@ type Credential struct {
 type CredentialStorage interface {
 	// GetCredential retrieves a credential from storage. If no credential is found for the
 	// given ID return ErrCredentialNotFound.
-	GetCredential(credentialID []byte) (*Credential, error)
+	GetCredential(ctx context.Context, credentialID []byte) (*Credential, error)
 	// SetCredential saves a credential to storage.
-	SetCredential(credential *Credential) error
+	SetCredential(ctx context.Context, credential *Credential) error
 }
 
 // An InMemoryCredentialStorage stores credential in an in-memory map.
@@ -48,7 +49,7 @@ func NewInMemoryCredentialStorage() *InMemoryCredentialStorage {
 }
 
 // GetCredential gets the credential from the map.
-func (storage *InMemoryCredentialStorage) GetCredential(credentialID []byte) (*Credential, error) {
+func (storage *InMemoryCredentialStorage) GetCredential(ctx context.Context, credentialID []byte) (*Credential, error) {
 	credential, ok := storage.m[string(credentialID)]
 	if !ok {
 		return nil, ErrCredentialNotFound
@@ -57,7 +58,7 @@ func (storage *InMemoryCredentialStorage) GetCredential(credentialID []byte) (*C
 }
 
 // SetCredential sets the credential in the map.
-func (storage *InMemoryCredentialStorage) SetCredential(credential *Credential) error {
+func (storage *InMemoryCredentialStorage) SetCredential(ctx context.Context, credential *Credential) error {
 	storage.m[string(credential.ID)] = credential
 	return nil
 }
@@ -87,6 +88,7 @@ func NewRelyingParty(originURL string, credentialStorage CredentialStorage) *Rel
 // VerifyAuthenticationCeremony verifies an authentication ceremony by performing steps
 // 4-22 of https://www.w3.org/TR/webauthn-2/#sctn-verifying-assertion.
 func (rp *RelyingParty) VerifyAuthenticationCeremony(
+	ctx context.Context,
 	options *PublicKeyCredentialRequestOptions,
 	credential *PublicKeyAssertionCredential,
 	verifyOptions ...VerifyOption,
@@ -113,7 +115,7 @@ func (rp *RelyingParty) VerifyAuthenticationCeremony(
 	//     - If the user was not identified before the authentication ceremony was initiated, verify that
 	//       response.userHandle is present, and that the user identified by this value is the owner of
 	//       credentialSource.
-	serverCredential, err := rp.credentialStorage.GetCredential(credential.RawID)
+	serverCredential, err := rp.credentialStorage.GetCredential(ctx, credential.RawID)
 	if err != nil {
 		return nil, err
 	} else if !bytesAreEqual(credential.Response.UserHandle, serverCredential.OwnerID) {
@@ -218,6 +220,7 @@ func (rp *RelyingParty) VerifyAuthenticationCeremony(
 // VerifyRegistrationCeremony verifies a registration ceremony by performing steps
 // 4-24 of https://www.w3.org/TR/webauthn-2/#sctn-registering-a-new-credential.
 func (rp *RelyingParty) VerifyRegistrationCeremony(
+	ctx context.Context,
 	creationOptions *PublicKeyCredentialCreationOptions,
 	credential *PublicKeyCreationCredential,
 	verifyOptions ...VerifyOption,
@@ -352,7 +355,7 @@ func (rp *RelyingParty) VerifyRegistrationCeremony(
 	// 22. Check that the credentialId is not yet registered to any other user. If registration is requested for a
 	//     credential that is already registered to a different user, the Relying Party SHOULD fail this registration
 	//     ceremony, or it MAY decide to accept the registration, e.g. while deleting the older registration.
-	existingCredential, err := rp.credentialStorage.GetCredential(credential.RawID)
+	existingCredential, err := rp.credentialStorage.GetCredential(ctx, credential.RawID)
 	switch {
 	case errors.Is(err, ErrCredentialNotFound):
 	case err != nil:
@@ -372,7 +375,7 @@ func (rp *RelyingParty) VerifyRegistrationCeremony(
 		OwnerID:   creationOptions.User.ID,
 		PublicKey: authenticatorData.AttestedCredentialData.CredentialPublicKey,
 	}
-	err = rp.credentialStorage.SetCredential(serverCredential)
+	err = rp.credentialStorage.SetCredential(ctx, serverCredential)
 	if err != nil {
 		return nil, fmt.Errorf("error saving credential: %w", err)
 	}
