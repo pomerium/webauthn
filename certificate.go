@@ -13,7 +13,9 @@ import (
 var AppleCertPool = x509.NewCertPool()
 
 func init() {
-	_ = AppleCertPool.AppendCertsFromPEM(AppleWebAuthnRootCAPEM)
+	if !AppleCertPool.AppendCertsFromPEM(AppleWebAuthnRootCAPEM) {
+		panic("invalid apple webauthn root ca")
+	}
 }
 
 var (

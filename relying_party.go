@@ -16,6 +16,8 @@ var (
 	ErrCredentialNotFound = errors.New("credential not found")
 	// ErrCredentialRegisteredToDifferentUser is the error used to indicate a credential is being used by another user.
 	ErrCredentialRegisteredToDifferentUser = errors.New("credential registered to another user")
+	// ErrInvalidRPIDHash is the error used to indicate an rp id hash is invalid.
+	ErrInvalidRPIDHash = errors.New("invalid rp id hash")
 )
 
 // A Credential is the public key and user id stored by the relying party to identify
@@ -163,7 +165,7 @@ func (rp *RelyingParty) VerifyAuthenticationCeremony(
 
 	expectedRPIDHash := sha256.Sum256(rp.id)
 	if !bytesAreEqual(authenticatorData.RPIDHash[:], expectedRPIDHash[:]) {
-		return nil, fmt.Errorf("invalid rp id hash")
+		return nil, ErrInvalidRPIDHash
 	}
 
 	// 16. Verify that the User Present bit of the flags in authData is set.

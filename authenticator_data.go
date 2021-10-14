@@ -3,8 +3,8 @@ package webauthn
 import (
 	"bytes"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/binary"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -18,7 +18,7 @@ type RPIDHash [RPIDHashSize]byte
 
 // MarshalJSON marshals the RPIDHash for JSON.
 func (rpidhash RPIDHash) MarshalJSON() ([]byte, error) {
-	return json.Marshal(hex.EncodeToString(rpidhash[:]))
+	return json.Marshal(base64.RawURLEncoding.EncodeToString(rpidhash[:]))
 }
 
 // ErrInvalidAuthenticatorData indicates the authenticator data is invalid.
