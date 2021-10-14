@@ -4,11 +4,16 @@ import (
 	"bytes"
 	"crypto"
 	"crypto/subtle"
+	"encoding/base64"
 	"encoding/binary"
 	"io"
 
 	"github.com/fxamacker/cbor/v2"
 )
+
+func bytesAreEqual(x, y []byte) bool {
+	return subtle.ConstantTimeCompare(x, y) == 1
+}
 
 func concat(bss ...[]byte) []byte {
 	sz := 0
@@ -42,6 +47,10 @@ func hashIsEqual(hash crypto.Hash, data []byte, expectedHashSum []byte) bool {
 	return subtle.ConstantTimeCompare(h.Sum(nil), expectedHashSum) == 1
 }
 
+func stringsAreEqual(x, y string) bool {
+	return bytesAreEqual([]byte(x), []byte(y))
+}
+
 func write(w io.Writer, bs ...byte) error {
 	_, err := w.Write(bs)
 	return err
@@ -59,4 +68,30 @@ func writeUint32(w io.Writer, v uint32) error {
 	binary.BigEndian.PutUint32(buf[:], v)
 	_, err := w.Write(buf[:])
 	return err
+}
+
+func fromBase64URL(encoded string) ([]byte, error) {
+	if encoded == "" {
+		return nil, nil
+	}
+	return base64.RawURLEncoding.DecodeString(encoded)
+}
+
+func toBase64URL(raw []byte) string {
+	return base64.RawURLEncoding.EncodeToString(raw)
+}
+
+func fromNullableBase64URL(encoded *string) ([]byte, error) {
+	if encoded == nil || *encoded == "" {
+		return nil, nil
+	}
+	return base64.RawURLEncoding.DecodeString(*encoded)
+}
+
+func toNullableBase64URL(raw []byte) *string {
+	if len(raw) == 0 {
+		return nil
+	}
+	encoded := base64.RawURLEncoding.EncodeToString(raw)
+	return &encoded
 }

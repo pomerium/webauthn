@@ -1,0 +1,10 @@
+{
+  "allowCredentials": [
+    {
+      "type": "public-key",
+      "id": "7cWX5VG1H7JgBAVtxf3vaU3RxvyktSyEpLxcCq6LaqWY3WV1YWcKvajD7KHaHdEopNQibbCbvTpBqtHXSZRnqg"
+    }
+  ],
+  "challenge": "dGVzdC1jaGFsbGVuZ2U",
+  "timeout": 15000
+}

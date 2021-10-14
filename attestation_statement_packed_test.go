@@ -15,7 +15,7 @@ func TestVerifyPackedAttestationStatement(t *testing.T) {
 			require.NoError(t, err)
 			clientDataJSONHash := response.GetClientDataJSONHash()
 			t.Run(name, func(t *testing.T) {
-				err = VerifyAttestationStatement(attestationObject, clientDataJSONHash)
+				_, err = VerifyAttestationStatement(attestationObject, clientDataJSONHash)
 				assert.NoError(t, err)
 			})
 		}
@@ -27,7 +27,7 @@ func TestVerifyPackedAttestationStatement(t *testing.T) {
 		require.NoError(t, err)
 		clientDataJSONHash := response.GetClientDataJSONHash()
 
-		err = VerifyPackedAttestationStatement(attestationObject, clientDataJSONHash)
+		_, err = VerifyPackedAttestationStatement(attestationObject, clientDataJSONHash)
 		assert.ErrorIs(t, err, ErrInvalidAttestationStatement)
 	})
 	t.Run("invalid certificate", func(t *testing.T) {
@@ -37,7 +37,7 @@ func TestVerifyPackedAttestationStatement(t *testing.T) {
 		clientDataJSONHash := response.GetClientDataJSONHash()
 		attestationObject.Statement["x5c"] = []byte("INVALID")
 
-		err = VerifyPackedAttestationStatement(attestationObject, clientDataJSONHash)
+		_, err = VerifyPackedAttestationStatement(attestationObject, clientDataJSONHash)
 		assert.ErrorIs(t, err, ErrInvalidAttestationStatement)
 	})
 	t.Run("invalid authenticator data", func(t *testing.T) {
@@ -47,7 +47,7 @@ func TestVerifyPackedAttestationStatement(t *testing.T) {
 		clientDataJSONHash := response.GetClientDataJSONHash()
 		attestationObject.AuthData = []byte("INVALID")
 
-		err = VerifyPackedAttestationStatement(attestationObject, clientDataJSONHash)
+		_, err = VerifyPackedAttestationStatement(attestationObject, clientDataJSONHash)
 		assert.ErrorIs(t, err, ErrInvalidAttestationStatement)
 	})
 	t.Run("invalid signature", func(t *testing.T) {
@@ -57,7 +57,7 @@ func TestVerifyPackedAttestationStatement(t *testing.T) {
 		clientDataJSONHash := response.GetClientDataJSONHash()
 		attestationObject.Statement["sig"] = []byte("INVALID")
 
-		err = VerifyPackedAttestationStatement(attestationObject, clientDataJSONHash)
+		_, err = VerifyPackedAttestationStatement(attestationObject, clientDataJSONHash)
 		assert.ErrorIs(t, err, ErrInvalidAttestationStatement)
 	})
 }

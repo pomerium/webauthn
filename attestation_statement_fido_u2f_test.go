@@ -24,7 +24,7 @@ func TestVerifyFIDOU2FAttestationStatement(t *testing.T) {
 			require.NoError(t, err)
 			clientDataJSONHash := response.GetClientDataJSONHash()
 			t.Run(name, func(t *testing.T) {
-				err = VerifyAttestationStatement(attestationObject, clientDataJSONHash)
+				_, err = VerifyAttestationStatement(attestationObject, clientDataJSONHash)
 				assert.NoError(t, err)
 			})
 		}
@@ -44,7 +44,7 @@ func TestVerifyFIDOU2FAttestationStatement(t *testing.T) {
 			nil,
 		)
 		attestationObject.Statement["x5c"] = nil
-		err := VerifyAttestationStatement(attestationObject, ClientDataJSONHash{})
+		_, err := VerifyAttestationStatement(attestationObject, ClientDataJSONHash{})
 		assert.Contains(t, err.Error(), "invalid x5c certificate")
 	})
 	t.Run("bad algorithm", func(t *testing.T) {
@@ -53,7 +53,7 @@ func TestVerifyFIDOU2FAttestationStatement(t *testing.T) {
 			key2,
 			nil,
 		)
-		err = VerifyAttestationStatement(attestationObject, ClientDataJSONHash{})
+		_, err = VerifyAttestationStatement(attestationObject, ClientDataJSONHash{})
 		assert.Contains(t, err.Error(), "only the P-256 curve is supported")
 	})
 	t.Run("bad public key", func(t *testing.T) {
@@ -70,7 +70,7 @@ func TestVerifyFIDOU2FAttestationStatement(t *testing.T) {
 				data.AttestedCredentialData.CredentialPublicKey = rawKey
 			},
 		)
-		err = VerifyAttestationStatement(attestationObject, ClientDataJSONHash{})
+		_, err = VerifyAttestationStatement(attestationObject, ClientDataJSONHash{})
 		assert.Contains(t, err.Error(), "only ECDSA keys are supported")
 	})
 	t.Run("bad signature", func(t *testing.T) {
@@ -80,7 +80,7 @@ func TestVerifyFIDOU2FAttestationStatement(t *testing.T) {
 			nil,
 		)
 		attestationObject.Statement["sig"] = nil
-		err := VerifyAttestationStatement(attestationObject, ClientDataJSONHash{})
+		_, err := VerifyAttestationStatement(attestationObject, ClientDataJSONHash{})
 		assert.Contains(t, err.Error(), "invalid signature")
 	})
 }

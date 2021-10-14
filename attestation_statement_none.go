@@ -5,6 +5,8 @@ package webauthn
 func VerifyNoneAttestationStatement(
 	attestationObject *AttestationObject,
 	clientDataJSONHash ClientDataJSONHash,
-) error {
-	return nil
+) (*VerifyAttestationStatementResult, error) {
+	return &VerifyAttestationStatementResult{
+		Type: AttestationTypeNone,
+	}, nil
 }

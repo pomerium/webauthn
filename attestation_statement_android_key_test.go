@@ -26,7 +26,7 @@ func TestVerifyAndroidKeyAttestationStatement(t *testing.T) {
 			require.NoError(t, err)
 			clientDataJSONHash := response.GetClientDataJSONHash()
 			t.Run(name, func(t *testing.T) {
-				err = VerifyAttestationStatement(attestationObject, clientDataJSONHash)
+				_, err = VerifyAttestationStatement(attestationObject, clientDataJSONHash)
 				assert.NoError(t, err)
 			})
 		}
@@ -35,7 +35,7 @@ func TestVerifyAndroidKeyAttestationStatement(t *testing.T) {
 		attestationObject := createTestAndroidKeyAttestationObject(t,
 			[]byte{0, 0, 0, 0}, nil, nil)
 		attestationObject.Statement["sig"] = []byte("INVALID")
-		err := VerifyAttestationStatement(attestationObject, ClientDataJSONHash{})
+		_, err := VerifyAttestationStatement(attestationObject, ClientDataJSONHash{})
 		assert.Contains(t, err.Error(), "invalid signature")
 	})
 	t.Run("mismatched keys", func(t *testing.T) {
@@ -53,7 +53,7 @@ func TestVerifyAndroidKeyAttestationStatement(t *testing.T) {
 
 				authenticatorData.AttestedCredentialData.CredentialPublicKey = rawKey
 			})
-		err := VerifyAttestationStatement(attestationObject, ClientDataJSONHash{})
+		_, err := VerifyAttestationStatement(attestationObject, ClientDataJSONHash{})
 		assert.Contains(t, err.Error(), "mismatched public keys")
 	})
 	t.Run("different challenges", func(t *testing.T) {
@@ -67,7 +67,7 @@ func TestVerifyAndroidKeyAttestationStatement(t *testing.T) {
 					1, 2, 3, 4, 5, 6, 7, 8,
 				}
 			}, nil)
-		err := VerifyAttestationStatement(attestationObject, ClientDataJSONHash{})
+		_, err := VerifyAttestationStatement(attestationObject, ClientDataJSONHash{})
 		assert.Contains(t, err.Error(), "invalid attestation challenge")
 	})
 	t.Run("allows all applications", func(t *testing.T) {
@@ -76,7 +76,7 @@ func TestVerifyAndroidKeyAttestationStatement(t *testing.T) {
 			func(kdp *android.KeyDescription) {
 				kdp.TeeEnforced.AllApplications = true
 			}, nil)
-		err := VerifyAttestationStatement(attestationObject, ClientDataJSONHash{})
+		_, err := VerifyAttestationStatement(attestationObject, ClientDataJSONHash{})
 		assert.Contains(t, err.Error(), "must be scoped")
 	})
 	t.Run("wrong origin", func(t *testing.T) {
@@ -85,7 +85,7 @@ func TestVerifyAndroidKeyAttestationStatement(t *testing.T) {
 			func(kdp *android.KeyDescription) {
 				kdp.TeeEnforced.Origin = android.KeyOriginImported
 			}, nil)
-		err := VerifyAttestationStatement(attestationObject, ClientDataJSONHash{})
+		_, err := VerifyAttestationStatement(attestationObject, ClientDataJSONHash{})
 		assert.Contains(t, err.Error(), "must be generated")
 	})
 	t.Run("wrong purpose", func(t *testing.T) {
@@ -94,7 +94,7 @@ func TestVerifyAndroidKeyAttestationStatement(t *testing.T) {
 			func(kdp *android.KeyDescription) {
 				kdp.TeeEnforced.Purpose = android.KeyMasterPurposeSet{android.KeyMasterPurposeEncrypt}
 			}, nil)
-		err := VerifyAttestationStatement(attestationObject, ClientDataJSONHash{})
+		_, err := VerifyAttestationStatement(attestationObject, ClientDataJSONHash{})
 		assert.Contains(t, err.Error(), "must support signing")
 	})
 }

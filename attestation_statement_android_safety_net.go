@@ -18,7 +18,7 @@ const safetyNetAttestationDNSName = "attest.android.com"
 func VerifyAndroidSafetyNetAttestationStatement(
 	attestationObject *AttestationObject,
 	clientDataJSONHash ClientDataJSONHash,
-) error {
+) (*VerifyAttestationStatementResult, error) {
 	// 1. Verify that attStmt is valid CBOR conforming to the syntax defined above and perform CBOR decoding on it to
 	//    extract the contained fields.
 	//    - by this point the attestation statement is already CBOR decoded
@@ -28,24 +28,24 @@ func VerifyAndroidSafetyNetAttestationStatement(
 	//    ver is reserved for future use.
 	rawResponse, ok := attestationObject.Statement["response"].([]byte)
 	if !ok {
-		return fmt.Errorf("%w: missing SafetyNet response", ErrInvalidAttestationStatement)
+		return nil, fmt.Errorf("%w: missing SafetyNet response", ErrInvalidAttestationStatement)
 	}
 
 	safetyNetJWT, err := jwt.ParseSigned(string(rawResponse))
 	if err != nil {
-		return fmt.Errorf("%w: error parsing SafetyNet response, %s", ErrInvalidAttestationStatement, err)
+		return nil, fmt.Errorf("%w: error parsing SafetyNet response, %s", ErrInvalidAttestationStatement, err)
 	}
 
 	chains, err := verifyAndroidSafetyNetCertificateChain(safetyNetJWT)
 	if err != nil {
-		return fmt.Errorf("%w: %s", ErrInvalidAttestationStatement, err)
+		return nil, fmt.Errorf("%w: %s", ErrInvalidAttestationStatement, err)
 	}
 	leaf := chains[0][0]
 
 	var safetyNetClaims android.SafetyNetClaims
 	err = safetyNetJWT.Claims(leaf.PublicKey, &safetyNetClaims)
 	if err != nil {
-		return fmt.Errorf("%w: %s", ErrInvalidAttestationStatement, err)
+		return nil, fmt.Errorf("%w: %s", ErrInvalidAttestationStatement, err)
 	}
 
 	// 3. Verify that the nonce attribute in the payload of response is identical to the Base64 encoding of the
@@ -53,14 +53,23 @@ func VerifyAndroidSafetyNetAttestationStatement(
 	verificationData := concat(attestationObject.AuthData, clientDataJSONHash[:])
 	expectedNonce := sha256.Sum256(verificationData)
 	if subtle.ConstantTimeCompare(safetyNetClaims.Nonce, expectedNonce[:]) != 1 {
-		return fmt.Errorf("%w: invalid nonce", ErrInvalidAttestationStatement)
+		return nil, fmt.Errorf("%w: invalid nonce", ErrInvalidAttestationStatement)
 	}
 
 	// 4. Verify that the SafetyNet response actually came from the SafetyNet service by following the steps in the
 	//    SafetyNet online documentation.
 	//    - certificates are verified by verifyAndroidSafetyNetCertificateChain
 
-	return nil
+	var trustPaths [][]*x509.Certificate
+	for _, hdr := range safetyNetJWT.Headers {
+		if hdr.JSONWebKey != nil {
+			trustPaths = append(trustPaths, hdr.JSONWebKey.Certificates)
+		}
+	}
+	return &VerifyAttestationStatementResult{
+		Type:       AttestationTypeBasic,
+		TrustPaths: trustPaths,
+	}, nil
 }
 
 func verifyAndroidSafetyNetCertificateChain(safetyNetJWT *jwt.JSONWebToken) (chains [][]*x509.Certificate, err error) {

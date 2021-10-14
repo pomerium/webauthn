@@ -1,0 +1,27 @@
+{
+  "rp": {
+    "name": "Pomerium"
+  },
+  "user": {
+    "displayName": "Test User",
+    "name": "test-user",
+    "id": "dGVzdC11c2Vy"
+  },
+  "pubKeyCredParams": [
+    {
+      "type": "public-key",
+      "alg": -257
+    },
+    {
+      "type": "public-key",
+      "alg": -7
+    }
+  ],
+  "authenticatorSelection": {
+    "authenticatorAttachment": "cross-platform",
+    "requireResidentKey": false
+  },
+  "attestation": "direct",
+  "challenge": "dGVzdC1jaGFsbGVuZ2U",
+  "timeout": 15000
+}

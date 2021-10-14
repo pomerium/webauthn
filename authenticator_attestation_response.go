@@ -44,3 +44,42 @@ func (response *AuthenticatorAttestationResponse) UnmarshalClientData() (*Collec
 	}
 	return &data, nil
 }
+
+// MarshalJSON marshals the AuthenticatorAttestationResponse as JSON.
+func (response AuthenticatorAttestationResponse) MarshalJSON() ([]byte, error) {
+	type Override AuthenticatorAttestationResponse
+	return json.Marshal(struct {
+		Override
+		ClientDataJSON    string `json:"clientDataJSON"`
+		AttestationObject string `json:"attestationObject"`
+	}{
+		Override:          Override(response),
+		ClientDataJSON:    toBase64URL(response.ClientDataJSON),
+		AttestationObject: toBase64URL(response.AttestationObject),
+	})
+}
+
+// UnmarshalJSON unmarshals the AuthenticatorAttestationResponse as JSON.
+func (response *AuthenticatorAttestationResponse) UnmarshalJSON(raw []byte) error {
+	type Override AuthenticatorAttestationResponse
+	var override struct {
+		Override
+		ClientDataJSON    string `json:"clientDataJSON"`
+		AttestationObject string `json:"attestationObject"`
+	}
+	err := json.Unmarshal(raw, &override)
+	if err != nil {
+		return err
+	}
+
+	*response = AuthenticatorAttestationResponse(override.Override)
+	response.ClientDataJSON, err = fromBase64URL(override.ClientDataJSON)
+	if err != nil {
+		return err
+	}
+	response.AttestationObject, err = fromBase64URL(override.AttestationObject)
+	if err != nil {
+		return err
+	}
+	return nil
+}

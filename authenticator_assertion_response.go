@@ -43,3 +43,56 @@ func (response *AuthenticatorAssertionResponse) UnmarshalClientData() (*Collecte
 	}
 	return &data, nil
 }
+
+// MarshalJSON marshals the AuthenticatorAssertionResponse as JSON.
+func (response AuthenticatorAssertionResponse) MarshalJSON() ([]byte, error) {
+	type Override AuthenticatorAssertionResponse
+	return json.Marshal(struct {
+		Override
+		ClientDataJSON    string  `json:"clientDataJSON"`
+		AuthenticatorData string  `json:"authenticatorData"`
+		Signature         string  `json:"signature"`
+		UserHandle        *string `json:"userHandle"`
+	}{
+		Override:          Override(response),
+		ClientDataJSON:    toBase64URL(response.ClientDataJSON),
+		AuthenticatorData: toBase64URL(response.AuthenticatorData),
+		Signature:         toBase64URL(response.Signature),
+		UserHandle:        toNullableBase64URL(response.UserHandle),
+	})
+}
+
+// UnmarshalJSON unmarshals the AuthenticatorAssertionResponse from JSON.
+func (response *AuthenticatorAssertionResponse) UnmarshalJSON(raw []byte) error {
+	type Override AuthenticatorAssertionResponse
+	var override struct {
+		Override
+		ClientDataJSON    string  `json:"clientDataJSON"`
+		AuthenticatorData string  `json:"authenticatorData"`
+		Signature         string  `json:"signature"`
+		UserHandle        *string `json:"userHandle"`
+	}
+	err := json.Unmarshal(raw, &override)
+	if err != nil {
+		return err
+	}
+
+	*response = AuthenticatorAssertionResponse(override.Override)
+	response.ClientDataJSON, err = fromBase64URL(override.ClientDataJSON)
+	if err != nil {
+		return err
+	}
+	response.AuthenticatorData, err = fromBase64URL(override.AuthenticatorData)
+	if err != nil {
+		return err
+	}
+	response.Signature, err = fromBase64URL(override.Signature)
+	if err != nil {
+		return err
+	}
+	response.UserHandle, err = fromNullableBase64URL(override.UserHandle)
+	if err != nil {
+		return err
+	}
+	return nil
+}

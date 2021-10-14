@@ -26,16 +26,33 @@ var (
 	ErrMissingPubArea = errors.New("missing pubArea")
 )
 
+// AttestationFormat is the attestation format.
+type AttestationFormat string
+
 // Attestation formats from https://www.w3.org/TR/webauthn-2/#sctn-defined-attestation-formats
 const (
-	AttestationFormatAndroidKey       = "android-key"
-	AttestationFormatAndroidSafetyNet = "android-safetynet"
-	AttestationFormatApple            = "apple"
-	AttestationFormatFIDOU2F          = "fido-u2f"
-	AttestationFormatNone             = "none"
-	AttestationFormatPacked           = "packed"
-	AttestationFormatTPM              = "tpm"
+	AttestationFormatAndroidKey       AttestationFormat = "android-key"
+	AttestationFormatAndroidSafetyNet AttestationFormat = "android-safetynet"
+	AttestationFormatApple            AttestationFormat = "apple"
+	AttestationFormatFIDOU2F          AttestationFormat = "fido-u2f"
+	AttestationFormatNone             AttestationFormat = "none"
+	AttestationFormatPacked           AttestationFormat = "packed"
+	AttestationFormatTPM              AttestationFormat = "tpm"
 )
+
+// AllAttestationFormats are all the attestation formats.
+var AllAttestationFormats = []AttestationFormat{
+	AttestationFormatAndroidKey,
+	AttestationFormatAndroidSafetyNet,
+	AttestationFormatApple,
+	AttestationFormatFIDOU2F,
+	AttestationFormatNone,
+	AttestationFormatPacked,
+	AttestationFormatTPM,
+}
+
+// AttestationType is the attestation type.
+type AttestationType string
 
 // Attestation types from https://www.w3.org/TR/webauthn-2/#sctn-attestation-types
 const (
@@ -62,7 +79,19 @@ const (
 	AttestationTypeAnonymizationCA = "AnonCA"
 	// AttestationTypeNone indicates no attestation information is available.
 	AttestationTypeNone = "None"
+	// AttestationTypeUnknown indicates the attestation type is not known.
+	AttestationTypeUnknown = "Unknown"
 )
+
+// AllAttestationTypes are all the known attestation types.
+var AllAttestationTypes = []AttestationType{
+	AttestationTypeBasic,
+	AttestationTypeSelf,
+	AttestationTypeAttestationCA,
+	AttestationTypeAnonymizationCA,
+	AttestationTypeNone,
+	AttestationTypeUnknown,
+}
 
 // AttestationStatement is a map of data stored in an AttestationObject according to one of the pre-defined attestation
 // statement formats.
@@ -151,12 +180,18 @@ func (attestationStatement AttestationStatement) UnmarshalPubArea() (*tpm.Public
 	return public, nil
 }
 
+// VerifyAttestationStatementResult is the result of running VerifyAttestationStatement.
+type VerifyAttestationStatementResult struct {
+	Type       AttestationType
+	TrustPaths [][]*x509.Certificate
+}
+
 // VerifyAttestationStatement verifies that an AttestationObject's attestation statement is valid according to the
 // verification procedures defined for know attestation statement formats.
 func VerifyAttestationStatement(
 	attestationObject *AttestationObject,
 	clientDataJSONHash ClientDataJSONHash,
-) error {
+) (*VerifyAttestationStatementResult, error) {
 	switch attestationObject.Format {
 	case AttestationFormatAndroidKey:
 		return VerifyAndroidKeyAttestationStatement(attestationObject, clientDataJSONHash)
@@ -173,7 +208,7 @@ func VerifyAttestationStatement(
 	case AttestationFormatTPM:
 		return VerifyTPMAttestationStatement(attestationObject, clientDataJSONHash)
 	default:
-		return fmt.Errorf("%w: unknown format %s", ErrInvalidAttestationStatement,
+		return nil, fmt.Errorf("%w: unknown format %s", ErrInvalidAttestationStatement,
 			attestationObject.Format)
 	}
 }

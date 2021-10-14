@@ -3,7 +3,9 @@ package webauthn
 import (
 	"bytes"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/binary"
+	"encoding/json"
 	"errors"
 	"fmt"
 )
@@ -13,6 +15,11 @@ const RPIDHashSize = sha256.Size
 
 // RPIDHash is the SHA-256 hash of the RP ID.
 type RPIDHash [RPIDHashSize]byte
+
+// MarshalJSON marshals the RPIDHash for JSON.
+func (rpidhash RPIDHash) MarshalJSON() ([]byte, error) {
+	return json.Marshal(base64.RawURLEncoding.EncodeToString(rpidhash[:]))
+}
 
 // ErrInvalidAuthenticatorData indicates the authenticator data is invalid.
 var ErrInvalidAuthenticatorData = errors.New("invalid authenticator data")

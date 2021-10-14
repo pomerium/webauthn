@@ -1,6 +1,4 @@
 {
-  "status": "ok",
-  "errorMessage": "",
   "rp": {
     "name": "Fido2 test",
     "id": "localhost"
@@ -22,7 +20,5 @@
     }
   ],
   "timeout": 60000,
-  "attestation": "direct",
-  "authenticatorSelection": null,
-  "excludeCredentials": []
+  "attestation": "direct"
 }

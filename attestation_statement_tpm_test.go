@@ -15,7 +15,7 @@ func TestVerifyTPMAttestationStatement(t *testing.T) {
 			require.NoError(t, err)
 			clientDataJSONHash := response.GetClientDataJSONHash()
 			t.Run(name, func(t *testing.T) {
-				err := VerifyAttestationStatement(attestationObject, clientDataJSONHash)
+				_, err := VerifyAttestationStatement(attestationObject, clientDataJSONHash)
 				assert.NoError(t, err)
 			})
 		}
