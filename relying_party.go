@@ -12,7 +12,6 @@ import (
 )
 
 var (
-
 	// ErrCredentialNotFound is the error used to indicate a credential wasn't found.
 	ErrCredentialNotFound = errors.New("credential not found")
 	// ErrCredentialRegisteredToDifferentUser is the error used to indicate a credential is being used by another user.
