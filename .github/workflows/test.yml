@@ -5,6 +5,7 @@ on:
       - v*
     branches:
       - main
+      - master
   pull_request:
 jobs:
   test:
