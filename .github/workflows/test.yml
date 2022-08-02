@@ -23,7 +23,7 @@ jobs:
           echo "::set-output name=go-mod::$(go env GOMODCACHE)"
 
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Cache go build
         uses: actions/cache@v3
