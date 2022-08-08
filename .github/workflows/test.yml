@@ -48,7 +48,7 @@ jobs:
           go test -race -covermode atomic -coverprofile=coverage.txt ./...
 
       - name: Convert coverage to lcov
-        uses: jandelgado/gcov2lcov-action@v1.0.8
+        uses: jandelgado/gcov2lcov-action@v1.0.9
         with:
           infile: coverage.txt
           outfile: coverage.lcov
