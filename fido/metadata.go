@@ -12,6 +12,7 @@ import (
 
 // GlobalSignRootCAPEM is the Root CA used by the FIDO Alliance to sign the
 // BLOB metadata service. Taken from https://valid.r3.roots.globalsign.com/.
+//
 //go:embed files/globalsign-root-ca-r3.pem
 var GlobalSignRootCAPEM []byte
 

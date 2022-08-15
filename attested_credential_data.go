@@ -44,11 +44,10 @@ type AttestedCredentialData struct {
 // UnmarshalAttestedCredentialData unmarshals an AttestedCredentialData according to the data layout described in
 // https://www.w3.org/TR/webauthn-2/#sctn-attested-credential-data:
 //
-//     aaguid: 16 bytes
-//     credentialIdLength: 2 bytes, 16-bit unsigned big-endian = L
-//     credentialId: L bytes
-//     credentialPublicKey: variable, CTAP2 canonical CBOR encoding form
-//
+//	aaguid: 16 bytes
+//	credentialIdLength: 2 bytes, 16-bit unsigned big-endian = L
+//	credentialId: L bytes
+//	credentialPublicKey: variable, CTAP2 canonical CBOR encoding form
 func UnmarshalAttestedCredentialData(raw []byte) (data *AttestedCredentialData, remaining []byte, err error) {
 	data = new(AttestedCredentialData)
 

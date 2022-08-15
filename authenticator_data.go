@@ -44,12 +44,11 @@ type AuthenticatorData struct {
 // UnmarshalAuthenticatorData unmarshals AuthenticatorData according to the data layout described in:
 // https://www.w3.org/TR/webauthn-2/#authenticator-data.
 //
-//     rpIdHash: 32 bytes
-//     flags: 1 byte, bitmask
-//     signCount: 4 bytes, 32-bit unsigned big-endian integer
-//     attestedCredentialData: variable
-//     extensions: variable, cbor map
-//
+//	rpIdHash: 32 bytes
+//	flags: 1 byte, bitmask
+//	signCount: 4 bytes, 32-bit unsigned big-endian integer
+//	attestedCredentialData: variable
+//	extensions: variable, cbor map
 func UnmarshalAuthenticatorData(raw []byte) (data *AuthenticatorData, remaining []byte, err error) {
 	data = new(AuthenticatorData)
 

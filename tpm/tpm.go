@@ -25,12 +25,11 @@ type VendorID [4]byte
 // UnmarshalVendorID unmarshals a vendor id according to the TPMManufacturer format defined in 3.1.2 of
 // https://www.trustedcomputinggroup.org/wp-content/uploads/Credential_Profile_EK_V2.0_R14_published.pdf:
 //
-//   The value of the TPMManufacturer attribute MUST be the ASCII representation of the
-//   hexadecimal value of the 4 byte vendor identifier defined in the TCG Vendor ID Registry[3]. Each
-//   byte is represented individually as a two digit unsigned hexadecimal number using the characters
-//   0-9 and A-F. The result is concatenated together to form an 8 character name which is appended
-//   after the lower-case ASCII characters “id:”.
-//
+//	The value of the TPMManufacturer attribute MUST be the ASCII representation of the
+//	hexadecimal value of the 4 byte vendor identifier defined in the TCG Vendor ID Registry[3]. Each
+//	byte is represented individually as a two digit unsigned hexadecimal number using the characters
+//	0-9 and A-F. The result is concatenated together to form an 8 character name which is appended
+//	after the lower-case ASCII characters “id:”.
 func UnmarshalVendorID(value string) (VendorID, error) {
 	id, err := unmarshalTPMID(value)
 	if err != nil {
