@@ -148,7 +148,7 @@ func (rp *RelyingParty) VerifyAuthenticationCeremony(
 	}
 
 	// 13. Verify that the value of C.origin matches the Relying Party's origin.
-	if !stringsAreEqual(clientData.Origin, rp.origin) {
+	if !originMatches(clientData.Origin, rp.origin) {
 		return nil, fmt.Errorf("invalid client data origin")
 	}
 
@@ -252,7 +252,7 @@ func (rp *RelyingParty) VerifyRegistrationCeremony(
 	}
 
 	//  9. Verify that the value of C.origin matches the Relying Party's origin.
-	if !stringsAreEqual(rp.origin, clientData.Origin) {
+	if !originMatches(clientData.Origin, rp.origin) {
 		return nil, fmt.Errorf("invalid client data origin")
 	}
 
