@@ -7,6 +7,8 @@ import (
 	"encoding/base64"
 	"encoding/binary"
 	"io"
+	"net/url"
+	"strings"
 
 	"github.com/fxamacker/cbor/v2"
 )
@@ -45,6 +47,34 @@ func hashIsEqual(hash crypto.Hash, data []byte, expectedHashSum []byte) bool {
 	h := hash.New()
 	h.Write(data)
 	return subtle.ConstantTimeCompare(h.Sum(nil), expectedHashSum) == 1
+}
+
+func originMatches(clientOrigin, relyingPartyOrigin string) bool {
+	clientOriginURL, err := url.Parse(clientOrigin)
+	if err != nil {
+		return false
+	}
+
+	relyingPartyOriginURL, err := url.Parse(relyingPartyOrigin)
+	if err != nil {
+		return false
+	}
+
+	clientHost := clientOriginURL.Hostname()
+	relyingPartyHost := relyingPartyOriginURL.Hostname()
+
+	for clientHost != "" {
+		if clientHost == relyingPartyHost {
+			return true
+		}
+
+		if idx := strings.Index(clientHost, "."); idx >= 0 {
+			clientHost = clientHost[idx+1:]
+		} else {
+			return false
+		}
+	}
+	return false
 }
 
 func stringsAreEqual(x, y string) bool {
