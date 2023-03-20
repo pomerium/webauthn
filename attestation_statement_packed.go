@@ -100,7 +100,7 @@ func verifyPackedAttestationStatementCertificate(
 		if aaguid.Equals(authenticatorData.AttestedCredentialData.AAGUID) {
 			return fmt.Errorf("%w: invalid AAGUID", ErrInvalidAttestationStatement)
 		}
-	} else if errors.Is(err, errMissingAAGUID) {
+	} else if errors.Is(err, errMissingAAGUID) { //nolint:revive
 		// According to the spec:
 		//
 		//   If the related attestation root certificate is used for multiple authenticator models, the Extension OID
