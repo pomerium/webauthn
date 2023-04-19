@@ -50,7 +50,7 @@ func NewInMemoryCredentialStorage() *InMemoryCredentialStorage {
 }
 
 // GetCredential gets the credential from the map.
-func (storage *InMemoryCredentialStorage) GetCredential(ctx context.Context, credentialID []byte) (*Credential, error) {
+func (storage *InMemoryCredentialStorage) GetCredential(_ context.Context, credentialID []byte) (*Credential, error) {
 	credential, ok := storage.m[string(credentialID)]
 	if !ok {
 		return nil, ErrCredentialNotFound
@@ -59,7 +59,7 @@ func (storage *InMemoryCredentialStorage) GetCredential(ctx context.Context, cre
 }
 
 // SetCredential sets the credential in the map.
-func (storage *InMemoryCredentialStorage) SetCredential(ctx context.Context, credential *Credential) error {
+func (storage *InMemoryCredentialStorage) SetCredential(_ context.Context, credential *Credential) error {
 	storage.m[string(credential.ID)] = credential
 	return nil
 }
@@ -92,7 +92,7 @@ func (rp *RelyingParty) VerifyAuthenticationCeremony(
 	ctx context.Context,
 	options *PublicKeyCredentialRequestOptions,
 	credential *PublicKeyAssertionCredential,
-	verifyOptions ...VerifyOption,
+	_ ...VerifyOption,
 ) (*Credential, error) {
 	//  4. Let clientExtensionResults be the result of calling credential.getClientExtensionResults().
 
