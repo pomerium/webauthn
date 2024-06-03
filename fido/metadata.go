@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 
-	"gopkg.in/square/go-jose.v2/jwt"
+	"github.com/go-jose/go-jose/v3/jwt"
 )
 
 // GlobalSignRootCAPEM is the Root CA used by the FIDO Alliance to sign the
