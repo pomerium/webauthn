@@ -8,7 +8,7 @@ import (
 
 	"github.com/pomerium/webauthn/android"
 
-	"gopkg.in/square/go-jose.v2/jwt"
+	"github.com/go-jose/go-jose/v3/jwt"
 )
 
 const safetyNetAttestationDNSName = "attest.android.com"
