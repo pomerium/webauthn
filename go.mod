@@ -1,11 +1,13 @@
 module github.com/pomerium/webauthn
 
-go 1.21
+go 1.22
+
+toolchain go1.22.4
 
 require (
-	github.com/fxamacker/cbor/v2 v2.6.0
+	github.com/fxamacker/cbor/v2 v2.7.0
 	github.com/go-jose/go-jose/v3 v3.0.3
-	github.com/google/go-tpm v0.9.0
+	github.com/google/go-tpm v0.9.1
 	github.com/google/uuid v1.6.0
 	github.com/stretchr/testify v1.9.0
 )
