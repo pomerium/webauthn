@@ -1,6 +1,10 @@
 # Webauthn
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/pomerium/webauthn)](https://goreportcard.com/report/github.com/pomerium/webauthn) [![GoDoc](https://pkg.go.dev/badge/github.com/pomerium/webauthn?status.svg)](https://pkg.go.dev/github.com/pomerium/webauthn?tab=doc) [![Coverage Status](https://coveralls.io/repos/github/pomerium/webauthn/badge.svg?branch=main)](https://coveralls.io/github/pomerium/webauthn?branch=main) [![discuss](https://img.shields.io/discourse/posts?server=https%3A%2F%2Fdiscuss.pomerium.com%2F&label=discuss)](https://discuss.pomerium.com/) [![GitHub Actions](https://img.shields.io/github/actions/workflow/status/pomerium/webauthn/test.yml?style=flat)](https://github.com/pomerium/webauthn/actions/workflows/test.yml) [![LICENSE](https://img.shields.io/github/license/pomerium/webauthn.svg)](https://github.com/pomerium/webauthn/blob/master/LICENSE)
+[![Go Report Card](https://goreportcard.com/badge/github.com/pomerium/webauthn)](https://goreportcard.com/report/github.com/pomerium/webauthn)
+[![GoDoc](https://pkg.go.dev/badge/github.com/pomerium/webauthn?status.svg)](https://pkg.go.dev/github.com/pomerium/webauthn?tab=doc)
+[![Coverage Status](https://coveralls.io/repos/github/pomerium/webauthn/badge.svg?branch=main)](https://coveralls.io/github/pomerium/webauthn?branch=main)
+[![discuss](https://img.shields.io/discourse/posts?server=https%3A%2F%2Fdiscuss.pomerium.com%2F&label=discuss)](https://discuss.pomerium.com/)
+[![GitHub Actions](https://img.shields.io/github/actions/workflow/status/pomerium/webauthn/test.yml?style=flat)](https://github.com/pomerium/webauthn/actions/workflows/test.yml) [![LICENSE](https://img.shields.io/github/license/pomerium/webauthn.svg)](https://github.com/pomerium/webauthn/blob/master/LICENSE)
 
 This [Go library](https://pkg.go.dev/github.com/pomerium/webauthn) implements [WebAuthn](https://www.w3.org/TR/webauthn/)/[FIDO2](https://fidoalliance.org/fido2/) spec as a [relying party](https://www.w3.org/TR/webauthn/#relying-party), and includes:
 
@@ -11,9 +15,10 @@ This [Go library](https://pkg.go.dev/github.com/pomerium/webauthn) implements [W
 
 ## Code examples
 
-A WebAuthn relying party verifies device identity in two steps. First a device is registered using the `VerifyRegistrationCeremony` method: 
+A WebAuthn relying party verifies device identity in two steps. First a device is registered using the `VerifyRegistrationCeremony` method:
 
 ### Register
+
 ```go
 ctx := context.Background()
 
@@ -66,8 +71,8 @@ _ = json.Unmarshal([]byte(`
 credential, err := relyingParty.VerifyRegistrationCeremony(ctx, &options, &response)
 ```
 
-
 ### Authenticate
+
 Once a device is registered subsequent logins can authenticate the device using `VerifyAuthenticationCeremony`:
 
 ```go
