@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/ccoveille/go-safecast"
+
 	"github.com/pomerium/webauthn/fido"
 )
 
@@ -89,7 +91,11 @@ func (attestedCredentialData *AttestedCredentialData) Marshal() ([]byte, error) 
 	if err := write(&buf, attestedCredentialData.AAGUID[:]...); err != nil {
 		return nil, err
 	}
-	if err := writeUint16(&buf, uint16(len(attestedCredentialData.CredentialID))); err != nil {
+	sz, err := safecast.ToUint16(len(attestedCredentialData.CredentialID))
+	if err != nil {
+		return nil, err
+	}
+	if err := writeUint16(&buf, sz); err != nil {
 		return nil, err
 	}
 	if err := write(&buf, attestedCredentialData.CredentialID...); err != nil {

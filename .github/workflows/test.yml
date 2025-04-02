@@ -16,11 +16,10 @@ jobs:
 
       - uses: actions/setup-go@0aaccfd150d50ccaeb58ebd88d36e91967a5f35b
         with:
-          go-version: 1.21.x
+          go-version: 1.24.x
 
       - name: Run tests
-        run: |
-          go test -race -covermode atomic -coverprofile=coverage.txt ./...
+        run: make cover
 
       - uses: jandelgado/gcov2lcov-action@4e1989767862652e6ca8d3e2e61aabe6d43be28b
         name: convert coverage to lcov
