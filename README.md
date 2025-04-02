@@ -2,7 +2,7 @@
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/pomerium/webauthn)](https://goreportcard.com/report/github.com/pomerium/webauthn)
 [![GoDoc](https://pkg.go.dev/badge/github.com/pomerium/webauthn?status.svg)](https://pkg.go.dev/github.com/pomerium/webauthn?tab=doc)
-[![Coverage Status](https://coveralls.io/repos/github/pomerium/webauthn/badge.svg?branch=main)](https://coveralls.io/github/pomerium/webauthn?branch=main)
+[![Coverage Status](https://coveralls.io/repos/github/pomerium/webauthn/badge.svg)](https://coveralls.io/github/pomerium/webauthn)
 [![discuss](https://img.shields.io/discourse/posts?server=https%3A%2F%2Fdiscuss.pomerium.com%2F&label=discuss)](https://discuss.pomerium.com/)
 [![GitHub Actions](https://img.shields.io/github/actions/workflow/status/pomerium/webauthn/test.yml?style=flat)](https://github.com/pomerium/webauthn/actions/workflows/test.yml) [![LICENSE](https://img.shields.io/github/license/pomerium/webauthn.svg)](https://github.com/pomerium/webauthn/blob/master/LICENSE)
 
