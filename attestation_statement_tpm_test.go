@@ -8,6 +8,9 @@ import (
 )
 
 func TestVerifyTPMAttestationStatement(t *testing.T) {
+	// The example TPM attestation responses include a CA certificate with a
+	// negative serial number, which Go no longer allows by default.
+	t.Setenv("GODEBUG", "x509negativeserial=1")
 	t.Run("valid", func(t *testing.T) {
 		for _, name := range []string{"TPMSHA1", "TPMSHA256"} {
 			response := readTestAuthenticatorAttestationResponse(t, name)
