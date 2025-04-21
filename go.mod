@@ -2,8 +2,6 @@ module github.com/pomerium/webauthn
 
 go 1.23.0
 
-toolchain go1.24.2
-
 require (
 	github.com/ccoveille/go-safecast v1.6.1
 	github.com/fxamacker/cbor/v2 v2.8.0
