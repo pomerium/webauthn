@@ -6,7 +6,7 @@ require (
 	github.com/ccoveille/go-safecast v1.6.1
 	github.com/fxamacker/cbor/v2 v2.8.0
 	github.com/go-jose/go-jose/v3 v3.0.4
-	github.com/google/go-tpm v0.9.3
+	github.com/google/go-tpm v0.9.4
 	github.com/google/uuid v1.6.0
 	github.com/stretchr/testify v1.10.0
 )
