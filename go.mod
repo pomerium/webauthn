@@ -8,7 +8,7 @@ require (
 	github.com/go-jose/go-jose/v3 v3.0.4
 	github.com/google/go-tpm v0.9.5
 	github.com/google/uuid v1.6.0
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.1
 )
 
 require (
