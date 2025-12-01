@@ -3,10 +3,10 @@ module github.com/pomerium/webauthn
 go 1.24.0
 
 require (
-	github.com/ccoveille/go-safecast v1.8.1
+	github.com/ccoveille/go-safecast v1.8.2
 	github.com/fxamacker/cbor/v2 v2.9.0
 	github.com/go-jose/go-jose/v3 v3.0.4
-	github.com/google/go-tpm v0.9.6
+	github.com/google/go-tpm v0.9.7
 	github.com/google/uuid v1.6.0
 	github.com/stretchr/testify v1.11.1
 )
