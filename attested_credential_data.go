@@ -91,7 +91,7 @@ func (attestedCredentialData *AttestedCredentialData) Marshal() ([]byte, error) 
 	if err := write(&buf, attestedCredentialData.AAGUID[:]...); err != nil {
 		return nil, err
 	}
-	sz, err := safecast.ToUint16(len(attestedCredentialData.CredentialID))
+	sz, err := safecast.Convert[uint16](len(attestedCredentialData.CredentialID))
 	if err != nil {
 		return nil, err
 	}
