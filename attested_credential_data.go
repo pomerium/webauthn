@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/ccoveille/go-safecast"
+	"github.com/ccoveille/go-safecast/v2"
 
 	"github.com/pomerium/webauthn/fido"
 )
