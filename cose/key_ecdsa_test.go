@@ -58,7 +58,7 @@ func TestUnmarshalECDSAPublicKey(t *testing.T) {
 
 			genKey, err := ecdsa.GenerateKey(ellipticCurve, random)
 			require.NoError(t, err)
-			rawKey, err := cbor.Marshal(map[int]interface{}{
+			rawKey, err := cbor.Marshal(map[int]any{
 				1:  KeyTypeElliptic,
 				3:  alg,
 				-1: curve,
@@ -76,7 +76,6 @@ func TestUnmarshalECDSAPublicKey(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		testCase := testCase
 		t.Run(testCase.Name, func(t *testing.T) {
 			key, remaining, err := UnmarshalPublicKey(testCase.RawKey)
 			assert.NoError(t, err)
@@ -95,7 +94,7 @@ func TestECDSAPublicKey_Verify(t *testing.T) {
 	require.True(t, ok)
 	genKey, err := ecdsa.GenerateKey(ellipticCurve, random)
 	require.NoError(t, err)
-	rawKey, err := cbor.Marshal(map[int]interface{}{
+	rawKey, err := cbor.Marshal(map[int]any{
 		1:  KeyTypeElliptic,
 		3:  AlgorithmES256,
 		-1: CurveP256,

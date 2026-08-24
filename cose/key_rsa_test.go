@@ -52,7 +52,7 @@ func TestUnmarshalRSAPublicKey(t *testing.T) {
 	} {
 		genKey, err := rsa.GenerateKey(random, 2048)
 		require.NoError(t, err)
-		rawKey, err := cbor.Marshal(map[int]interface{}{
+		rawKey, err := cbor.Marshal(map[int]any{
 			1:  KeyTypeRSA,
 			3:  alg,
 			-1: genKey.N.Bytes(),
@@ -68,7 +68,6 @@ func TestUnmarshalRSAPublicKey(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		testCase := testCase
 		t.Run(testCase.Name, func(t *testing.T) {
 			key, remaining, err := UnmarshalPublicKey(testCase.RawKey)
 			assert.NoError(t, err)

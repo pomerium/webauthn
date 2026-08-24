@@ -18,7 +18,7 @@ var GlobalSignRootCAPEM []byte
 
 type (
 	// AuthenticatorGetInfo describes supported versions, extensions, AAGUID of the device and its capabilities.
-	AuthenticatorGetInfo map[string]interface{}
+	AuthenticatorGetInfo map[string]any
 	// AuthenticatorStatus is the status of the authenticator model.
 	AuthenticatorStatus string
 	// The BiometricAccuracyDescriptor describes relevant accuracy/complexity aspects in the case of a biometric user

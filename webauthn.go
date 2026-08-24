@@ -68,7 +68,7 @@ type PublicKeyAssertionCredential struct {
 	Response AuthenticatorAssertionResponse `json:"response"`
 	// ClientExtensionResults is a map containing extension identifier → client extension output entries produced by
 	// the extension’s client extension processing.
-	ClientExtensionResults map[string]interface{} `json:"clientExtensionResults,omitempty"`
+	ClientExtensionResults map[string]any `json:"clientExtensionResults,omitempty"`
 }
 
 // MarshalJSON marshals the PublicKeyAssertionCredential as JSON.
@@ -114,7 +114,7 @@ type PublicKeyCreationCredential struct {
 	Response AuthenticatorAttestationResponse `json:"response"`
 	// ClientExtensionResults is a map containing extension identifier → client extension output entries produced by
 	// the extension’s client extension processing.
-	ClientExtensionResults map[string]interface{} `json:"clientExtensionResults,omitempty"`
+	ClientExtensionResults map[string]any `json:"clientExtensionResults,omitempty"`
 }
 
 // MarshalJSON marshals the PublicKeyCreationCredential as JSON.
@@ -184,7 +184,7 @@ type PublicKeyCredentialCreationOptions struct {
 	// This member contains additional parameters requesting additional processing by the client and authenticator.
 	// For example, the caller may request that only authenticators with certain capabilities be used to create the
 	// credential, or that particular information be returned in the attestation object.
-	Extensions map[string]interface{} `json:"extensions,omitempty"`
+	Extensions map[string]any `json:"extensions,omitempty"`
 }
 
 // AllowsAlgorithm returns true if the creation options allow the given algorithm.
@@ -310,7 +310,7 @@ type PublicKeyCredentialRequestOptions struct {
 	// This OPTIONAL member contains additional parameters requesting additional processing by the client and
 	// authenticator. For example, if transaction confirmation is sought from the user, then the prompt string
 	// might be included as an extension.
-	Extensions map[string]interface{} `json:"extensions,omitempty"`
+	Extensions map[string]any `json:"extensions,omitempty"`
 }
 
 // MarshalJSON marshals the PublicKeyCredentialRequestOptions as JSON.

@@ -17,7 +17,7 @@ func TestUnmarshalPublicKey(t *testing.T) {
 		assert.ErrorIs(t, err, ErrInvalidPublicKey)
 	})
 	t.Run("invalid key type", func(t *testing.T) {
-		raw, err := cbor.Marshal(map[int]interface{}{
+		raw, err := cbor.Marshal(map[int]any{
 			1: 0,
 		})
 		require.NoError(t, err)
