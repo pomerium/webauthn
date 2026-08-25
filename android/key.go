@@ -1,6 +1,8 @@
 // Package android contains helper functions and types for Android.
 package android
 
+import "slices"
+
 import "encoding/asn1"
 
 // AuthorizationList is the keymaster authorization list.
@@ -87,12 +89,7 @@ type KeyMasterPurposeSet []KeyMasterPurpose
 
 // Has returns true if the set contains the given purpose.
 func (set KeyMasterPurposeSet) Has(purpose KeyMasterPurpose) bool {
-	for _, p := range set {
-		if p == purpose {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(set, purpose)
 }
 
 // A KeyOrigin describes the origin of a key as defined in:

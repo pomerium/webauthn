@@ -28,7 +28,7 @@ func TestUnmarshalAttestationObject(t *testing.T) {
 
 		return raw
 	}
-	mapKeys := func(m map[string]interface{}) []string {
+	mapKeys := func(m map[string]any) []string {
 		var ks []string
 		for k := range m {
 			ks = append(ks, k)

@@ -95,7 +95,7 @@ var AllAttestationTypes = []AttestationType{
 
 // AttestationStatement is a map of data stored in an AttestationObject according to one of the pre-defined attestation
 // statement formats.
-type AttestationStatement map[string]interface{}
+type AttestationStatement map[string]any
 
 // GetAlgorithm gets the "alg" field of the attestation statement. If no field is found, or the field contains invalid
 // data, 0 will be returned.
@@ -118,7 +118,7 @@ func (attestationStatement AttestationStatement) UnmarshalCertificates() ([]*x50
 		return nil, ErrMissingCertificate
 	}
 
-	x5cs, ok := x5c.([]interface{})
+	x5cs, ok := x5c.([]any)
 	if !ok {
 		return nil, ErrInvalidCertificate
 	}

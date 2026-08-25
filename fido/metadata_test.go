@@ -150,18 +150,18 @@ func TestUnmarshalMetadataBLOBPayload(t *testing.T) {
 					},
 					AuthenticatorGetInfo: AuthenticatorGetInfo{
 						"aaguid": "0132d110bf4e4208a403ab4f5f12efe5",
-						"algorithms": []interface{}{
-							map[string]interface{}{
+						"algorithms": []any{
+							map[string]any{
 								"alg":  -7.0,
 								"type": "public-key",
 							},
-							map[string]interface{}{
+							map[string]any{
 								"alg":  -257.0,
 								"type": "public-key",
 							},
 						},
 						"defaultCredProtect": 2.0,
-						"extensions": []interface{}{
+						"extensions": []any{
 							"credProtect",
 							"hmac-secret",
 						},
@@ -170,7 +170,7 @@ func TestUnmarshalMetadataBLOBPayload(t *testing.T) {
 						"maxCredentialCountInList":     16.0,
 						"maxCredentialIdLength":        128.0,
 						"maxMsgSize":                   1200.0,
-						"options": map[string]interface{}{
+						"options": map[string]any{
 							"clientPin": "true",
 							"config":    "false",
 							"plat":      "false",
@@ -179,9 +179,9 @@ func TestUnmarshalMetadataBLOBPayload(t *testing.T) {
 							"uv":        "true",
 							"uvToken":   "false",
 						},
-						"pinUvAuthProtocols": []interface{}{1.0},
-						"transports":         []interface{}{"usb", "nfc"},
-						"versions":           []interface{}{"U2F_V2", "FIDO_2_0"},
+						"pinUvAuthProtocols": []any{1.0},
+						"transports":         []any{"usb", "nfc"},
+						"versions":           []any{"U2F_V2", "FIDO_2_0"},
 					},
 				},
 				StatusReports: []StatusReport{

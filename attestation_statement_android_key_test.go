@@ -167,7 +167,7 @@ func createTestAndroidKeyAttestationObject(
 		Statement: AttestationStatement{
 			"alg": int64(cose.AlgorithmES256),
 			"sig": rawSignature,
-			"x5c": []interface{}{
+			"x5c": []any{
 				x5c,
 			},
 		},

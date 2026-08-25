@@ -20,7 +20,6 @@ func Test_originMatches(t *testing.T) {
 		{"subdomain", "https://a.b.c.d.e.f.example.com", "https://example.com", true},
 		{"superdomain", "https://example.com", "https://www.example.com", false},
 	} {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			assert.Equal(t, tc.matches, originMatches(tc.clientOrigin, tc.relyingPartyOrigin))

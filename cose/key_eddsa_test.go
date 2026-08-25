@@ -32,7 +32,7 @@ func TestUnmarshalEdDSAPublicKey(t *testing.T) {
 	t.Run("valid", func(t *testing.T) {
 		pub, _, err := ed25519.GenerateKey(random)
 		require.NoError(t, err)
-		rawKey, err := cbor.Marshal(map[int]interface{}{
+		rawKey, err := cbor.Marshal(map[int]any{
 			1:  KeyTypeOctet,
 			3:  AlgorithmEdDSA,
 			-1: CurveEd25519,
@@ -49,7 +49,7 @@ func TestUnmarshalEdDSAPublicKey(t *testing.T) {
 	t.Run("unsupported curve", func(t *testing.T) {
 		pub, err := base64.StdEncoding.DecodeString("I4ozqoQAbILoGwxq5TxS16k49Zq4q58/C19heG8Vb8Yxh1Yk6mhvTDBu1NsqF/dQ5laVoMRQPhOiiDRPE+QjrLc6ks41vfz4Mo6dntgRqmWOsvkJe45tkhYyPOzu+YnrXfH98hEL1yERIl8liG94nFAA")
 		require.NoError(t, err)
-		rawKey, err := cbor.Marshal(map[int]interface{}{
+		rawKey, err := cbor.Marshal(map[int]any{
 			1:  KeyTypeOctet,
 			3:  AlgorithmEdDSA,
 			-1: CurveEd448,
@@ -63,7 +63,7 @@ func TestUnmarshalEdDSAPublicKey(t *testing.T) {
 	t.Run("unsupported algorithm", func(t *testing.T) {
 		pub, _, err := ed25519.GenerateKey(random)
 		require.NoError(t, err)
-		rawKey, err := cbor.Marshal(map[int]interface{}{
+		rawKey, err := cbor.Marshal(map[int]any{
 			1:  KeyTypeOctet,
 			3:  -34,
 			-1: CurveEd25519,
@@ -80,7 +80,7 @@ func TestEdDSAPublicKey_Verify(t *testing.T) {
 	random := rand.New(rand.NewSource(1))
 	pub, priv, err := ed25519.GenerateKey(random)
 	require.NoError(t, err)
-	rawKey, err := cbor.Marshal(map[int]interface{}{
+	rawKey, err := cbor.Marshal(map[int]any{
 		1:  KeyTypeOctet,
 		3:  AlgorithmEdDSA,
 		-1: CurveEd25519,

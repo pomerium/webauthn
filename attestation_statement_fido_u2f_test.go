@@ -141,7 +141,7 @@ func createTestFIDOU2FAttestationObject(
 		Format:   AttestationFormatFIDOU2F,
 		Statement: AttestationStatement{
 			"sig": rawSignature,
-			"x5c": []interface{}{
+			"x5c": []any{
 				x5c,
 			},
 		},

@@ -31,7 +31,7 @@ func concat(bss ...[]byte) []byte {
 
 // extractCBOR splits a byte slice into two parts. The first contains CBOR data. The second the remaining bytes.
 func extractCBOR(data []byte) (cborData, remaining []byte, err error) {
-	var m interface{}
+	var m any
 	decoder := cbor.NewDecoder(bytes.NewReader(data))
 	err = decoder.Decode(&m)
 	if err != nil {
