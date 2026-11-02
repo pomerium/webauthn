@@ -6,7 +6,6 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"fmt"
-	"math/big"
 
 	"github.com/fxamacker/cbor/v2"
 )
@@ -97,13 +96,23 @@ func UnmarshalECDSAPublicKey(raw []byte) (key *ECDSAPublicKey, remaining []byte,
 		return nil, nil, fmt.Errorf("%w: %v", ErrUnsupportedCurve, obj.Curve)
 	}
 
-	publicKey := ecdsa.PublicKey{
-		Curve: curve,
-		X:     big.NewInt(0).SetBytes(obj.XCoordinate),
-		Y:     big.NewInt(0).SetBytes(obj.YCoordinate),
+	// Coordinates are left-padded to the curve's field size since some
+	// encoders strip leading zero bytes.
+	size := (curve.Params().BitSize + 7) / 8
+	if len(obj.XCoordinate) > size || len(obj.YCoordinate) > size {
+		return nil, nil, ErrInvalidPublicKey
+	}
+	uncompressed := make([]byte, 1+2*size)
+	uncompressed[0] = 0x04
+	copy(uncompressed[1+size-len(obj.XCoordinate):1+size], obj.XCoordinate)
+	copy(uncompressed[1+2*size-len(obj.YCoordinate):], obj.YCoordinate)
+
+	publicKey, err := ecdsa.ParseUncompressedPublicKey(curve, uncompressed)
+	if err != nil {
+		return nil, nil, fmt.Errorf("%w: %v", ErrInvalidPublicKey, err)
 	}
 
-	key, err = NewECDSAPublicKey(obj.Algorithm, publicKey)
+	key, err = NewECDSAPublicKey(obj.Algorithm, *publicKey)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -124,8 +133,12 @@ func (key ECDSAPublicKey) CryptoPublicKey() crypto.PublicKey {
 // RawX962ECC returns the RawX962ECC formatted public key.
 func (key ECDSAPublicKey) RawX962ECC() RawX962ECC {
 	var x, y [32]byte
-	copy(x[:], key.key.X.Bytes())
-	copy(y[:], key.key.Y.Bytes())
+	xCoordinate, yCoordinate, err := key.coordinates()
+	if err != nil {
+		return RawX962ECC{}
+	}
+	copy(x[:], xCoordinate)
+	copy(y[:], yCoordinate)
 	return NewRawX962ECC(x, y)
 }
 
@@ -148,14 +161,29 @@ func (key ECDSAPublicKey) Marshal() ([]byte, error) {
 		return nil, fmt.Errorf("%w: %v", ErrUnsupportedCurve, key.key.Curve)
 	}
 
+	xCoordinate, yCoordinate, err := key.coordinates()
+	if err != nil {
+		return nil, err
+	}
+
 	obj := publicKeyStructureEC2{
 		Type:        key.Type(),
 		Algorithm:   key.Algorithm(),
 		Curve:       curve,
-		XCoordinate: key.key.X.Bytes(),
-		YCoordinate: key.key.Y.Bytes(),
+		XCoordinate: xCoordinate,
+		YCoordinate: yCoordinate,
 	}
 	return cbor.Marshal(obj)
+}
+
+// coordinates returns the fixed-size big-endian X and Y coordinates of the key.
+func (key ECDSAPublicKey) coordinates() (x, y []byte, err error) {
+	uncompressed, err := key.key.Bytes()
+	if err != nil {
+		return nil, nil, fmt.Errorf("%w: %v", ErrInvalidPublicKey, err)
+	}
+	size := (len(uncompressed) - 1) / 2
+	return uncompressed[1 : 1+size], uncompressed[1+size:], nil
 }
 
 // Verify returns true if the signature is a valid ECDSA signature for data.
