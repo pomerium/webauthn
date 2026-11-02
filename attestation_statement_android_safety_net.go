@@ -8,8 +8,17 @@ import (
 
 	"github.com/pomerium/webauthn/android"
 
-	"github.com/go-jose/go-jose/v3/jwt"
+	"github.com/go-jose/go-jose/v4"
+	"github.com/go-jose/go-jose/v4/jwt"
 )
+
+// safetyNetSignatureAlgorithms are the signature algorithms allowed for SafetyNet attestation responses.
+var safetyNetSignatureAlgorithms = []jose.SignatureAlgorithm{
+	jose.RS256, jose.RS384, jose.RS512,
+	jose.PS256, jose.PS384, jose.PS512,
+	jose.ES256, jose.ES384, jose.ES512,
+	jose.EdDSA,
+}
 
 const safetyNetAttestationDNSName = "attest.android.com"
 
@@ -31,7 +40,7 @@ func VerifyAndroidSafetyNetAttestationStatement(
 		return nil, fmt.Errorf("%w: missing SafetyNet response", ErrInvalidAttestationStatement)
 	}
 
-	safetyNetJWT, err := jwt.ParseSigned(string(rawResponse))
+	safetyNetJWT, err := jwt.ParseSigned(string(rawResponse), safetyNetSignatureAlgorithms)
 	if err != nil {
 		return nil, fmt.Errorf("%w: error parsing SafetyNet response, %s", ErrInvalidAttestationStatement, err)
 	}

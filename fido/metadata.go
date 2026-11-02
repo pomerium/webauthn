@@ -7,8 +7,17 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/go-jose/go-jose/v3/jwt"
+	"github.com/go-jose/go-jose/v4"
+	"github.com/go-jose/go-jose/v4/jwt"
 )
+
+// metadataSignatureAlgorithms are the signature algorithms allowed for FIDO metadata BLOBs.
+var metadataSignatureAlgorithms = []jose.SignatureAlgorithm{
+	jose.RS256, jose.RS384, jose.RS512,
+	jose.PS256, jose.PS384, jose.PS512,
+	jose.ES256, jose.ES384, jose.ES512,
+	jose.EdDSA,
+}
 
 // GlobalSignRootCAPEM is the Root CA used by the FIDO Alliance to sign the
 // BLOB metadata service. Taken from https://valid.r3.roots.globalsign.com/.
@@ -239,7 +248,7 @@ func getConfig(options ...UnmarshalOption) *unmarshalConfig {
 func UnmarshalMetadataBLOBPayload(rawJWT string, options ...UnmarshalOption) (*MetadataBLOBPayload, error) {
 	cfg := getConfig(options...)
 
-	tok, err := jwt.ParseSigned(rawJWT)
+	tok, err := jwt.ParseSigned(rawJWT, metadataSignatureAlgorithms)
 	if err != nil {
 		return nil, err
 	}
