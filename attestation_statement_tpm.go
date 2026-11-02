@@ -185,9 +185,7 @@ func verifyTPMAttestationStatementPubAreaMatches(
 				return fmt.Errorf("%w: invalid public keys", ErrInvalidAttestationStatement)
 			}
 
-			if certificateKey.Curve != tpmPubAreaKey.Curve ||
-				certificateKey.X.Cmp(tpmPubAreaKey.X) != 0 ||
-				certificateKey.Y.Cmp(tpmPubAreaKey.Y) != 0 {
+			if !certificateKey.Equal(tpmPubAreaKey) {
 				return fmt.Errorf("%w: mismatched public keys", ErrInvalidAttestationStatement)
 			}
 
